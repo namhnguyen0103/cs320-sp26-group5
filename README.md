@@ -8,7 +8,7 @@ A graph-based collaborative note-taking web app. It's similar to Obsidian, but w
 
 ```
 CS320-SP26-GROUP5/
-├── backend/       # Backend (Flask/FastAPI) + Supabase
+├── backend/       # Backend (Flask/Django/FastAPI) + Supabase
 └── frontend/      # React + Vite + TypeScript
 ```
 
