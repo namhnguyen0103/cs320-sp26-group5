@@ -14,15 +14,7 @@ const INITIAL_WORKSPACES: Workspace[] = [
 ];
 
 // A single Workspace Card: receives the workspace object and two callbacks (onDelete and onOpen)
-function WorkspaceCard({
-  workspace,
-  onDelete,
-  onOpen,
-}: {
-  workspace: Workspace;
-  onDelete: (id: number) => void;
-  onOpen: (id: number) => void;
-}) {
+function WorkspaceCard({workspace, onDelete,onOpen}: {workspace: Workspace; onDelete: (id: number) => void; onOpen: (id: number) => void;}) {
   // Tracks whether the delete confirmation is showing for this card
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -30,11 +22,7 @@ function WorkspaceCard({
     <div style={styles.card}>
       <div style={styles.cardHeader}>
         <span style={styles.cardIcon}>◈</span>
-        <button
-          style={styles.deleteBtn}
-          onClick={() => setConfirmDelete(true)}
-          title="Delete workspace"
-        >
+        <button style={styles.deleteBtn} onClick={() => setConfirmDelete(true)} title="Delete workspace">
           ✕
         </button>
       </div>
@@ -45,17 +33,11 @@ function WorkspaceCard({
       {confirmDelete ? (
         <div style={styles.confirmRow}>
           <span style={styles.confirmText}>Delete this workspace?</span>
-          <button style={styles.confirmYes} onClick={() => onDelete(workspace.id)}>
-            Yes
-          </button>
-          <button style={styles.confirmNo} onClick={() => setConfirmDelete(false)}>
-            No
-          </button>
+          <button style={styles.confirmYes} onClick={() => onDelete(workspace.id)}>Yes</button>
+          <button style={styles.confirmNo} onClick={() => setConfirmDelete(false)}>No</button>
         </div>
       ) : (
-        <button style={styles.openBtn} onClick={() => onOpen(workspace.id)}>
-          Open →
-        </button>
+        <button style={styles.openBtn} onClick={() => onOpen(workspace.id)}>Open →</button>
       )}
     </div>
   );
