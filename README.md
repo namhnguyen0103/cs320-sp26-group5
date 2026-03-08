@@ -16,7 +16,7 @@ CS320-SP26-GROUP5/
 
 ## Frontend Setup
 
-**Requirements:** Node.js (v18 or higher)
+**Requirements:** Node.js (latest LTS version recommended)
 
 1. Navigate to the frontend folder:
    ```bash
