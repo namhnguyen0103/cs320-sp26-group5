@@ -1,17 +1,33 @@
 import { useState } from "react";
+import { db_client } from "./auth/client";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const navigate = useNavigate();
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (password !== confirm) {
       alert("Passwords don't match");
       return;
     }
-    // TODO: hook up to Supabase auth
-    alert("Creating account...");
+    
+    const { data, error } = await db_client.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Account created! Check your email to verify.");
+    console.log(data.user)  // DELETE
+
+    navigate("/login");
   }
 
   return (
