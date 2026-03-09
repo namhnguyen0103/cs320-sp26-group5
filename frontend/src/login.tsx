@@ -1,12 +1,28 @@
 import { useState } from "react";
+import { db_client } from "./auth/client.ts";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  function handleSubmit() {
-    // TODO: hook up to Supabase auth
-    alert("Logging in...");
+  async function handleSubmit() {
+    const { data, error } = await db_client.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Login successful!");
+    console.log(data.session);  // DELETE
+
+    // TODO: redirect to dashboard, populate with user's data
+    navigate("/home");
   }
 
   return (

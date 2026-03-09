@@ -71,15 +71,6 @@ export default function Home() {
 
   return (
     <div style={styles.page}>
-      <header style={styles.topBar}>
-        <div style={styles.logo}>◈ Synapse</div>
-        <div style={styles.userArea}>
-          {/* Hardcoded for now: swap in real user from auth later */}
-          <span style={styles.userName}>Michael</span>
-          <div style={styles.avatar}>M</div>
-        </div>
-      </header>
-
       <main style={styles.main}>
         <div style={styles.pageHeading}>
           <div>
@@ -138,14 +129,6 @@ const styles = {
     backgroundColor: "#f9f9f7",
     fontFamily: "'Georgia', serif",
     color: "#1a1a1a",
-  },
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 40px",
-    borderBottom: "1px solid #e5e5e0",
-    backgroundColor: "#ffffff",
   },
   logo: {
     fontSize: "20px",
