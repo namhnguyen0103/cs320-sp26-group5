@@ -38,3 +38,37 @@ def login(data: AuthRequest):
         "access_token": res.session.access_token,
         "refresh_token": res.session.refresh_token
     }
+
+class WorkspaceCreate(BaseModel):
+    user_id: str
+    name: str
+
+# Create Workspace
+@app.post("/workspaces")
+def create_workspace(body: WorkspaceCreate):
+    res = db_client.table("workspaces").insert({
+        "user_id": body.user_id,
+        "name": body.name,
+    }).execute()
+
+    if not res.data:
+        raise HTTPException(400, "Failed to create workspace")
+    return res.data[0]
+
+# Delete Workspace
+@app.delete("/workspaces/{workspace_id}")
+def delete_workspace(workspace_id: str):
+    res = db_client.table("workspaces").delete().eq("id", workspace_id).execute()
+
+    if not res.data:
+        raise HTTPException(404, "Workspace not found")
+    return {"message": "Workspace deleted", "id": workspace_id}
+
+# Access All Workspaces for a User
+@app.get("/workspaces/{user_id}")
+def get_workspaces(user_id: str):
+    res = db_client.table("workspaces").select("*").eq("user_id", user_id).execute()
+
+    if not res.data:
+        raise HTTPException(404, "No workspaces found")
+    return res.data
