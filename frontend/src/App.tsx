@@ -47,7 +47,7 @@ export default function App() {
               <Signup />
             </Layout>
           } />
-          <Route path="/dashboard" element={   // TODO: Build dashboard
+          <Route path="/dashboard" element={  
             <Layout>
               <ProtectedRoute>
                 <Dashboard />
@@ -55,7 +55,7 @@ export default function App() {
             </Layout>
           }></Route>
           <Route path="/editor" element={
-            <Layout>
+            <Layout fullWidth>
               <Editor />
             </Layout>
           } />
