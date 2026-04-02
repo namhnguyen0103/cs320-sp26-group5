@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import NotesSidebar from "./components/NotesSidebar";
 
 const STORAGE_KEY = "react-rich-text-editor-content";
+const NOTES_STORAGE_KEY = "react-rich-text-editor-notes";
 
 export default function TextEditor() {
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -12,9 +14,28 @@ export default function TextEditor() {
     return localStorage.getItem(STORAGE_KEY) || "<p>Start typing here...</p>";
   });
 
+  const [notes, setNotes] = useState<string[]>(() => {
+    const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+
+    if (savedNotes) {
+      try {
+        const parsed = JSON.parse(savedNotes) as string[];
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        // Ignore malformed storage and fall back to defaults.
+      }
+    }
+
+    return ["science.txt", "history.txt", "ideas.txt"];
+  });
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, html);
   }, [html]);
+
+  useEffect(() => {
+    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  }, [notes]);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== html) {
@@ -27,7 +48,10 @@ export default function TextEditor() {
   const updateHtml = () =>
     setHtml(editorRef.current?.innerHTML || "");
 
-  const runCommand = (command: string, value: string | null = null) => {
+  const runCommand = (
+    command: string,
+    value: string | undefined = undefined,
+  ) => {
     focusEditor();
     document.execCommand(command, false, value);
     updateHtml();
@@ -138,6 +162,22 @@ export default function TextEditor() {
     URL.revokeObjectURL(url);
   };
 
+  const handleCreateNote = () => {
+    const noteName = window.prompt(
+      "Enter note name (example: science.txt)",
+    );
+
+    if (!noteName) return;
+
+    const trimmed = noteName.trim();
+    if (!trimmed) return;
+
+    setNotes((prevNotes) => {
+      if (prevNotes.includes(trimmed)) return prevNotes;
+      return [...prevNotes, trimmed];
+    });
+  };
+
   return (
     <>
       <style>
@@ -145,12 +185,68 @@ export default function TextEditor() {
         .page{
           min-height:100vh;
           background:#f1f5f9;
-          padding:30px;
+          padding:20px;
+        }
+
+        .layout{
+          width:100%;
+          display:grid;
+          grid-template-columns:280px minmax(0, 1fr);
+          gap:20px;
+          align-items:start;
+        }
+
+        .notesSidebar{
+          background:white;
+          border-radius:20px;
+          padding:16px;
+          box-shadow:0 10px 25px rgba(0,0,0,0.08);
+          position:sticky;
+          top:20px;
+        }
+
+        .newNoteButton{
+          width:100%;
+          background:#0f172a;
+          color:white;
+          border:none;
+          border-radius:10px;
+          padding:10px 12px;
+          font-weight:600;
+          cursor:pointer;
+        }
+
+        .newNoteButton:hover{
+          background:#1e293b;
+        }
+
+        .notesList{
+          margin-top:14px;
+          display:flex;
+          flex-direction:column;
+          gap:8px;
+          max-height:70vh;
+          overflow:auto;
+        }
+
+        .noteEntryButton{
+          text-align:left;
+          width:100%;
+          border:1px solid #cbd5e1;
+          background:#f8fafc;
+          border-radius:10px;
+          padding:9px 11px;
+          cursor:pointer;
+          font-weight:500;
+          color:#0f172a;
+        }
+
+        .noteEntryButton:hover{
+          background:#eef2ff;
         }
 
         .container{
-          max-width:1100px;
-          margin:auto;
+          width:100%;
           background:white;
           padding:25px;
           border-radius:20px;
@@ -238,11 +334,27 @@ export default function TextEditor() {
           background:#f8fafc;
           font-family:monospace;
         }
+
+        @media (max-width: 900px){
+          .layout{
+            grid-template-columns:1fr;
+          }
+
+          .notesSidebar{
+            position:static;
+          }
+        }
         `}
       </style>
 
       <div className="page">
-        <div className="container">
+        <div className="layout">
+          <NotesSidebar
+            notes={notes}
+            onCreateNote={handleCreateNote}
+          />
+
+          <div className="container">
 
           <h1 className="title">
             React Text Editor
@@ -370,6 +482,7 @@ export default function TextEditor() {
 
           </div>
 
+        </div>
         </div>
       </div>
     </>

@@ -23,6 +23,15 @@ export default function Navbar() {
         <Link style={styles.link} to="/dashboard">
           Dashboard
         </Link>
+        <Link style={styles.link} to="/editor">
+          Text Editor
+        </Link>
+        <Link style={styles.link} to="/login">
+          Login
+        </Link>
+        <Link style={styles.link} to="/signup">
+          Signup
+        </Link>
       </nav>
       <div style={styles.userArea}>
         <span style={styles.userName}>{displayName}</span>
