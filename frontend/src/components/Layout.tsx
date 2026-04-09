@@ -2,11 +2,25 @@
 import type { ReactNode } from "react";
 import Navbar from "./Navbar";
 
-export default function Layout({ children }: { children: ReactNode }) {
+type LayoutProps = {
+  children: ReactNode;
+  fullWidth?: boolean;
+};
+
+export default function Layout({
+  children,
+  fullWidth = false,
+}: LayoutProps) {
   return (
     <div style={styles.page}>
       <Navbar />
-      <div style={styles.content}>{children}</div>
+      <div
+        style={fullWidth
+          ? styles.contentFullWidth
+          : styles.content}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -22,5 +36,9 @@ const styles = {
     paddingTop: "24px",
     maxWidth: "960px",
     margin: "0 auto",
+  },
+  contentFullWidth: {
+    paddingTop: "24px",
+    width: "100%",
   },
 };

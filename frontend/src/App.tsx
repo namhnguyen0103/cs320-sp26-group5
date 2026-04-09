@@ -4,6 +4,7 @@ import Home from "./Home";
 import Login from "./login";
 import Signup from "./signup";
 import Dashboard from "./Dashboard";
+import Editor from "./TextEditor.tsx"
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -46,13 +47,18 @@ export default function App() {
               <Signup />
            
           } />
-          <Route path="/dashboard" element={   // TODO: Build dashboard
+          <Route path="/dashboard" element={  
             <Layout>
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             </Layout>
           }></Route>
+          <Route path="/editor" element={
+            <Layout fullWidth>
+              <Editor />
+            </Layout>
+          } />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
