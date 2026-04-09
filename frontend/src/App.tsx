@@ -7,6 +7,7 @@ import Dashboard from "./Dashboard";
 import Editor from "./TextEditor.tsx"
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Landing } from "./Landing.tsx";
 
 
 // TODO:
@@ -29,7 +30,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={
             <Layout>
-              <Home />
+              <Landing />
             </Layout>
           } />
           <Route path="/home" element={
