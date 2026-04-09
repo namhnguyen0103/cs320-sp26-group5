@@ -18,10 +18,14 @@ export default function Login() {
       return;
     }
 
-    alert("Login successful!");
-    console.log(data.session);  // DELETE
+    // Save the token AND the user ID so the text editor and dashboard can use it!
+    if (data.session) {
+      localStorage.setItem("access_token", data.session.access_token);
+      localStorage.setItem("user_id", data.session.user.id);
+    }
 
-    // TODO: redirect to dashboard, populate with user's data
+    alert("Login successful!");
+
     navigate("/home");
   }
 

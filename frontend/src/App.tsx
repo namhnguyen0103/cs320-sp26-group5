@@ -3,10 +3,10 @@ import Layout from "./components/Layout";
 import Home from "./Home";
 import Login from "./login";
 import Signup from "./signup";
-import Dashboard from "./Dashboard";
+// import Dashboard from "./Dashboard";
 import Editor from "./TextEditor.tsx"
 import { AuthProvider } from "./auth/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+// import ProtectedRoute from "./components/ProtectedRoute";
 
 
 // TODO:
@@ -47,14 +47,15 @@ export default function App() {
               <Signup />
             </Layout>
           } />
-          <Route path="/dashboard" element={  
+          {/* <Route path="/dashboard" element={  
             <Layout>
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             </Layout>
-          }></Route>
-          <Route path="/editor" element={
+          }></Route> */}
+          {/* Changed this route to accept the workspace ID */}
+          <Route path="/editor/:workspaceId" element={
             <Layout fullWidth>
               <Editor />
             </Layout>
