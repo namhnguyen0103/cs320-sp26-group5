@@ -38,14 +38,14 @@ export default function App() {
             </Layout>
           } />
           <Route path="/login" element={
-            <Layout>
+           
               <Login />
-            </Layout>
+            
           } />
           <Route path="/signup" element={
-            <Layout>
+          
               <Signup />
-            </Layout>
+           
           } />
           {/* <Route path="/dashboard" element={  
             <Layout>
