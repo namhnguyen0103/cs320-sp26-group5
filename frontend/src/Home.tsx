@@ -1,20 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-// Shape of a workspace object: add more fields here later (ex. createdAt)
+// Shape of a workspace object: id changed to string to support Supabase UUIDs
 type Workspace = {
-  id: number;
+  id: string;
   name: string;
 };
 
-// Placeholder data: will be replaced by a Supabase fetch later
-const INITIAL_WORKSPACES: Workspace[] = [
-  { id: 1, name: "CS Notes" },
-  { id: 2, name: "CS320 Project" },
-  { id: 3, name: "Coding Ideas" },
-];
-
 // A single Workspace Card: receives the workspace object and two callbacks (onDelete and onOpen)
-function WorkspaceCard({workspace, onDelete,onOpen}: {workspace: Workspace; onDelete: (id: number) => void; onOpen: (id: number) => void;}) {
+function WorkspaceCard({workspace, onDelete, onOpen}: {workspace: Workspace; onDelete: (id: string) => void; onOpen: (id: string) => void;}) {
   // Tracks whether the delete confirmation is showing for this card
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -43,30 +37,79 @@ function WorkspaceCard({workspace, onDelete,onOpen}: {workspace: Workspace; onDe
   );
 }
 
-// Default Export is Home, meaning that this is rendered when navigated to. And then we call WorkspaceCard within here
+// Default Export is Home
 export default function Home() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(INITIAL_WORKSPACES);
-  const [showNewForm, setShowNewForm] = useState(false); //  whether the "create new workspace" form is visible
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [showNewForm, setShowNewForm] = useState(false); 
   const [newName, setNewName] = useState("");
 
-  function handleDelete(id: number) {
-    setWorkspaces(workspaces.filter((w) => w.id !== id));
+  const navigate = useNavigate();
+  const userId = localStorage.getItem("user_id");
+
+  // Fetch workspaces from backend when the component loads
+  useEffect(() => {
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    fetch(`http://localhost:8000/workspaces/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("No workspaces found");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setWorkspaces(data);
+        }
+      })
+      .catch((err) => console.log("No workspaces yet or error fetching:", err));
+  }, [userId, navigate]);
+
+  // Sends DELETE request to backend, then updates UI
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`http://localhost:8000/workspaces/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete workspace");
+      
+      setWorkspaces(workspaces.filter((w) => w.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert("Error deleting workspace.");
+    }
   }
 
-  // Placeholder: will be replaced with real navigation once routing is set up
-  function handleOpen(id: number) {
-    alert(`Opening workspace ${id}: navigation goes here!`);
+  // Routes to the text editor with the workspace ID in the URL
+  function handleOpen(id: string) {
+    navigate(`/editor/${id}`);
   }
 
-  function handleCreate() {
-    if (!newName.trim()) return; // do nothing if input is blank
-    const newWorkspace: Workspace = {
-      id: 8, // temp ID (lucky number) until the backend assigns a real one
-      name: newName.trim(),
-    };
-    setWorkspaces([...workspaces, newWorkspace]); // add to workspaces list
-    setNewName(""); // clear the input
-    setShowNewForm(false); // hide the form
+  // Sends POST request to create workspace in database, then updates UI
+  async function handleCreate() {
+    if (!newName.trim() || !userId) return; 
+    
+    try {
+      const res = await fetch("http://localhost:8000/workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: newName.trim()
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to create workspace");
+
+      const newWorkspace = await res.json();
+      setWorkspaces([...workspaces, newWorkspace]); 
+      setNewName(""); 
+      setShowNewForm(false); 
+    } catch (error) {
+      console.error(error);
+      alert("Error creating workspace. Is the backend running?");
+    }
   }
 
   return (

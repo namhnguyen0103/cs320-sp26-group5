@@ -20,12 +20,12 @@ export default function Navbar() {
         <Link style={styles.link} to="/">
           Home
         </Link>
-        <Link style={styles.link} to="/dashboard">
+        {/* <Link style={styles.link} to="/dashboard">
           Dashboard
-        </Link>
-        <Link style={styles.link} to="/editor">
+        </Link> */}
+        {/* <Link style={styles.link} to="/editor">
           Text Editor
-        </Link>
+        </Link> */}
         <Link style={styles.link} to="/login">
           Login
         </Link>

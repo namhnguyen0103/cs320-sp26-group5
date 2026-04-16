@@ -39,8 +39,14 @@ CS320-SP26-GROUP5/
 
 ## Backend Setup
 
-> To be filled in by the backend team.
-
+1. Pip install
+   ```bash
+   pip install uvicorn
+   ```
+2. Run backend
+   ```bash
+   python -m uvicorn main:app --reload
+   ```
 ---
 
 ## Tech Stack

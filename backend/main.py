@@ -1,9 +1,18 @@
 from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from db import db_client, create_file, get_files_by_workspace, delete_file
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class AuthRequest(BaseModel):
     email: str
@@ -113,6 +122,7 @@ def verify_workspace_ownership(workspace_id: str, user_id: str):
 
 class FileSaveRequest(BaseModel):
     workspace_id: str
+    file_id: str | None = None
     file_name: str
     file_contents: str
     linked_file_names: list[str] = []
@@ -130,27 +140,26 @@ def save_file(body: FileSaveRequest, authorization: str = Header(None)):
     user_id = get_user_id(authorization)
     verify_workspace_ownership(body.workspace_id, user_id)
 
-    # check if file with same name already exists in workspace
-    existing = db_client.table("files") \
-        .select("id") \
-        .eq("workspace_id", body.workspace_id) \
-        .eq("title", body.file_name) \
-        .execute()
-
-    if existing.data:
-        # update existing file
-        file_id = existing.data[0]["id"]
+    # 1. Check if we have a real database ID from the frontend
+    if body.file_id and not body.file_id.startswith("temp-"):
+        # UPDATE the existing file using its ID
         db_client.table("files") \
-            .update({"content": body.file_contents}) \
-            .eq("id", file_id) \
+            .update({
+                "title": body.file_name, 
+                "content": body.file_contents
+            }) \
+            .eq("id", body.file_id) \
             .execute()
+        file_id = body.file_id
+        
     else:
-        # create new file
+        # INSERT a brand new file
         res = db_client.table("files").insert({
             "workspace_id": body.workspace_id,
             "title": body.file_name,
             "content": body.file_contents
         }).execute()
+        
         if not res.data:
             raise HTTPException(400, "Failed to create file")
         file_id = res.data[0]["id"]
@@ -170,11 +179,26 @@ def save_file(body: FileSaveRequest, authorization: str = Header(None)):
         if target.data:
             db_client.table("file_links").insert({
                 "source_file_id": file_id,
-                "target_file_id": target.data[0]["id"]
+                "target_file_id": target.data[0]["id"],
+                "source_file_name": body.file_name,     # <-- Added source name
+                "target_file_name": linked_name         # <-- Added target name
             }).execute()
         # if linked file doesn't exist yet, skip silently
 
     return {"file_id": file_id, "message": "File saved"}
+
+@app.delete("/workspaces/{workspace_id}/files/{file_id}")
+def delete_file_endpoint(workspace_id: str, file_id: str, authorization: str = Header(None)):
+    user_id = get_user_id(authorization)
+    verify_workspace_ownership(workspace_id, user_id)
+
+    # Because of ON DELETE CASCADE, this single command also deletes all related file_links!
+    db_client.table("files") \
+        .delete() \
+        .eq("id", file_id) \
+        .execute()
+
+    return {"message": "File deleted successfully"}
 
 
 @app.get("/files/{file_id}")
