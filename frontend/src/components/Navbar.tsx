@@ -1,6 +1,7 @@
 // src/components/Navbar.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
@@ -33,6 +34,7 @@ export default function Navbar() {
           Signup
         </Link>
       </nav>
+      <SearchBar placeholder="Search Synapse..." />
       <div style={styles.userArea}>
         <span style={styles.userName}>{displayName}</span>
         <div style={styles.avatar}>{displayName[0].toUpperCase()}</div>
