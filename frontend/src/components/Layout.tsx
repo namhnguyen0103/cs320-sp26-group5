@@ -7,38 +7,42 @@ type LayoutProps = {
   fullWidth?: boolean;
 };
 
-export default function Layout({
-  children,
-  fullWidth = false,
-}: LayoutProps) {
+export default function Layout({ children, fullWidth = false }: LayoutProps) {
   return (
     <div style={styles.page}>
       <Navbar />
-      <div
-        style={fullWidth
-          ? styles.contentFullWidth
-          : styles.content}
-      >
+      <div style={styles.tealBar} />
+      <div style={fullWidth ? styles.contentFullWidth : styles.content}>
         {children}
       </div>
     </div>
   );
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    backgroundColor: "#f9f9f7",
-    fontFamily: "'Georgia', serif",
-    color: "#1a1a1a",
+    maxHeight:"100vh",
+    backgroundColor: "#111",
+    fontFamily: "Mukta Vaani, sans-serif",
+    color: "#ddd",
+    display: "flex",
+    flexDirection: "column",
+  },
+  tealBar: {
+    height: "3px",
+    background: "#3DD6D0",
+    flexShrink: 0,
   },
   content: {
-    paddingTop: "24px",
-    maxWidth: "960px",
-    margin: "0 auto",
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
   },
   contentFullWidth: {
-    paddingTop: "24px",
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
     width: "100%",
   },
 };
