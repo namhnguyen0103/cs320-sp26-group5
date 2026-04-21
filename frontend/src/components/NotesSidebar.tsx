@@ -1,5 +1,3 @@
-import React from "react";
-
 // Update the type to match the data coming from the database
 export type Note = {
   id: string;
