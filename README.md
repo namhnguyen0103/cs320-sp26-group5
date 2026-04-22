@@ -43,7 +43,11 @@ CS320-SP26-GROUP5/
    ```bash
    pip install uvicorn
    ```
-2. Run backend
+2. Navigate to backend
+    ```bash
+    cd backend
+    ```
+3. Run backend
    ```bash
    python -m uvicorn main:app --reload
    ```
