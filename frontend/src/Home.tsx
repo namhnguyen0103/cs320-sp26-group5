@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./auth/AuthContext";
+
+const API = "http://localhost:8000";
 
 type Workspace = {
-  id: number;
+  id: string;
+  user_id: string;
   name: string;
-  created: string;
-  edited: string;
+  created_at: string;
+  updated_at?: string;
 };
 
-const INITIAL_WORKSPACES: Workspace[] = [
-  { id: 1, name: "CS Notes", created: "3/8/26", edited: "3:14pm 3/10/26" },
-  { id: 2, name: "CS320 Project", created: "3/9/26", edited: "9:02am 3/11/26" },
-  { id: 3, name: "Coding Ideas", created: "3/10/26", edited: "1:45pm 3/12/26" },
-];
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+}
 
 function WorkspaceCard({
   workspace,
@@ -19,8 +23,8 @@ function WorkspaceCard({
   onOpen,
 }: {
   workspace: Workspace;
-  onDelete: (id: number) => void;
-  onOpen: (id: number) => void;
+  onDelete: (id: string) => void;
+  onOpen: (id: string) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -38,9 +42,10 @@ function WorkspaceCard({
 
       <h3 style={styles.cardName}>{workspace.name}</h3>
       <p style={styles.cardMeta}>
-        Date created: {workspace.created}
-        <br />
-        Last edited: {workspace.edited}
+        Date created: {formatDate(workspace.created_at)}
+        {workspace.updated_at && (
+          <><br />Last edited: {formatDate(workspace.updated_at)}</>
+        )}
       </p>
 
       {confirmDelete ? (
@@ -52,6 +57,11 @@ function WorkspaceCard({
       ) : (
         <div style={styles.cardOpen}>
           <button style={styles.openBtn} onClick={() => onOpen(workspace.id)}>Open →</button>
+          <button style={styles.shareBtn} onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(workspace.id);
+            alert("Workspace ID copied! Send this to your teammate.");
+          }}>Copy ID</button>
         </div>
       )}
     </div>
@@ -86,33 +96,121 @@ function IconLogout() {
 }
 
 export default function Home() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(INITIAL_WORKSPACES);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Create / Join State
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState("");
-  const [nextId, setNextId] = useState(10);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [joinId, setJoinId] = useState("");
 
-  function handleDelete(id: number) {
-    setWorkspaces(workspaces.filter((w) => w.id !== id));
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const filteredWorkspaces = workspaces.filter((w) =>
+    w.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch workspaces from backend
+  useEffect(() => {
+    if (!user?.userId) return;
+    fetchWorkspaces();
+  }, [user?.userId]);
+
+  async function fetchWorkspaces() {
+    if (!user?.userId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/workspaces/${user.userId}`);
+      if (res.status === 404) {
+        setWorkspaces([]);
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch workspaces");
+      const data: Workspace[] = await res.json();
+      setWorkspaces(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleOpen(id: number) {
-    alert(`Opening workspace ${id}: navigation goes here!`);
+  function handleOpen(id: string) {
+    navigate(`/editor/${id}`);
   }
 
-  function handleCreate() {
-    if (!newName.trim()) return;
-    const now = new Date();
-    const d = `${now.getMonth() + 1}/${now.getDate()}/${String(now.getFullYear()).slice(-2)}`;
-    const newWorkspace: Workspace = {
-      id: nextId,
-      name: newName.trim(),
-      created: d,
-      edited: "just now",
-    };
-    setWorkspaces([...workspaces, newWorkspace]);
-    setNextId(nextId + 1);
-    setNewName("");
-    setShowNewForm(false);
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`${API}/workspaces/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete workspace");
+      setWorkspaces((prev) => prev.filter((w) => w.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting workspace.");
+    }
+  }
+
+  async function handleCreate() {
+    if (!newName.trim() || !user?.userId) return;
+    try {
+      const res = await fetch(`${API}/workspaces`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.userId, name: newName.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to create workspace");
+      setNewName("");
+      setShowNewForm(false);
+      await fetchWorkspaces();
+    } catch (err) {
+      console.error(err);
+      alert("Error creating workspace.");
+    }
+  }
+
+  async function handleJoin() {
+    if (!joinId.trim()) return;
+    try {
+      const token = localStorage.getItem("access_token") || "";
+      const res = await fetch(`${API}/workspaces/${joinId.trim()}/join`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error("Failed to join");
+      
+      alert("Joined successfully!");
+      setJoinId("");
+      setShowJoinForm(false);
+      await fetchWorkspaces(); // Refresh list automatically
+    } catch (error) {
+      console.error(error);
+      alert("Error joining. Ensure the ID is correct.");
+    }
+  }
+
+  function handleSearchSelect(workspace: Workspace) {
+    setSearchQuery("");
+    setSearchOpen(false);
+    navigate(`/editor/${workspace.id}`);
   }
 
   return (
@@ -147,6 +245,9 @@ export default function Home() {
         .new-btn:hover {
           background: #26bfac !important;
         }
+        .search-dropdown-item:hover {
+          background: #f1f5f9;
+        }
       `}</style>
 
       <div style={styles.body}>
@@ -162,7 +263,7 @@ export default function Home() {
             <IconHelp />
             <span className="nav-label">Help</span>
           </div>
-          <div className="nav-item" style={styles.navItem}>
+          <div className="nav-item" style={styles.navItem} onClick={signOut}>
             <IconLogout />
             <span className="nav-label">Logout</span>
           </div>
@@ -175,15 +276,24 @@ export default function Home() {
               <h1 style={styles.h1}>Workspaces</h1>
               <p style={styles.subtitle}>Select a workspace to open its graph and notes.</p>
             </div>
-            <button
-              className="new-btn"
-              style={styles.newBtn}
-              onClick={() => setShowNewForm(!showNewForm)}
-            >
-              + New Workspace
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                style={styles.joinBtn}
+                onClick={() => { setShowJoinForm(!showJoinForm); setShowNewForm(false); }}
+              >
+                Join Workspace
+              </button>
+              <button
+                className="new-btn"
+                style={styles.newBtn}
+                onClick={() => { setShowNewForm(!showNewForm); setShowJoinForm(false); }}
+              >
+                + New Workspace
+              </button>
+            </div>
           </div>
 
+          {/* Creation Forms */}
           {showNewForm && (
             <div style={styles.newForm}>
               <input
@@ -201,25 +311,84 @@ export default function Home() {
             </div>
           )}
 
+          {showJoinForm && (
+            <div style={styles.newForm}>
+              <input
+                style={styles.input}
+                placeholder="Paste Workspace ID here..."
+                value={joinId}
+                onChange={(e) => setJoinId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                autoFocus
+              />
+              <button style={styles.createBtn} onClick={handleJoin}>Join</button>
+              <button style={styles.cancelBtn} onClick={() => { setShowJoinForm(false); setJoinId(""); }}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Search bar with dropdown */}
           <div style={styles.toolbar}>
-            <div style={styles.searchWrap}>
+            <div ref={searchRef} style={styles.searchWrap}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ color: "#555", flexShrink: 0 }}>
                 <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M10 10l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
-              <input style={styles.searchInput} placeholder="search" />
-            </div>
-            <button style={styles.filterBtn}>Status ▾</button>
-            <button style={styles.filterBtn}>Sort by... ⇅</button>
-            <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
-              <button style={styles.viewBtn}>⊞</button>
-              <button style={styles.viewBtn}>☰</button>
+              <input
+                style={styles.searchInput}
+                placeholder="Search workspaces..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                onKeyDown={(e) => e.key === "Escape" && setSearchOpen(false)}
+              />
+              {searchQuery && (
+                <button
+                  style={styles.clearBtn}
+                  onClick={() => { setSearchQuery(""); setSearchOpen(false); }}
+                >
+                  ✕
+                </button>
+              )}
+
+              {/* Dropdown */}
+              {searchOpen && (
+                <div style={styles.dropdown}>
+                  {filteredWorkspaces.length === 0 ? (
+                    <div style={styles.dropdownEmpty}>No workspaces found</div>
+                  ) : (
+                    filteredWorkspaces.map((w) => (
+                      <button
+                        key={w.id}
+                        className="search-dropdown-item"
+                        style={styles.dropdownItem}
+                        onMouseDown={() => handleSearchSelect(w)}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ color: "#888", flexShrink: 0 }}>
+                          <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                          <path d="M4 7h8M4 10h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        <span style={styles.dropdownItemName}>{w.name}</span>
+                        <span style={styles.dropdownItemDate}>{formatDate(w.created_at)}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {workspaces.length === 0 ? (
+          {loading ? (
             <div style={styles.empty}>
-              <p style={styles.emptyText}>No workspaces yet. Create one to get started.</p>
+              <p style={styles.emptyText}>Loading workspaces...</p>
+            </div>
+          ) : workspaces.length === 0 ? (
+            <div style={styles.empty}>
+              <p style={styles.emptyText}>No workspaces yet. Create or join one to get started.</p>
             </div>
           ) : (
             <div style={styles.grid}>
@@ -288,6 +457,16 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#555",
     margin: 0,
   },
+  joinBtn: {
+    padding: "9px 18px",
+    background: "transparent",
+    color: "#3DD6D0",
+    border: "1px solid #3DD6D0",
+    borderRadius: "20px",
+    fontFamily: "Mukta Vaani, sans-serif",
+    fontSize: "13px",
+    cursor: "pointer",
+  },
   newBtn: {
     padding: "9px 18px",
     background: "linear-gradient(#71F7DC 12%, #3DD6D0 100%)",
@@ -344,6 +523,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: "24px",
   },
   searchWrap: {
+    position: "relative",
     display: "flex",
     alignItems: "center",
     gap: "8px",
@@ -351,7 +531,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid #2a2a2a",
     borderRadius: "8px",
     padding: "7px 12px",
-    maxWidth: "260px",
+    maxWidth: "360px",
     flex: 1,
   },
   searchInput: {
@@ -362,23 +542,61 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "13px",
     width: "100%",
   },
-  filterBtn: {
-    background: "#1e1e1e",
-    border: "1px solid #2a2a2a",
-    borderRadius: "8px",
-    padding: "7px 12px",
-    fontSize: "12px",
-    color: "#888",
+  clearBtn: {
+    background: "none",
+    border: "none",
     cursor: "pointer",
+    fontSize: "11px",
+    color: "#555",
+    padding: "0 2px",
+    lineHeight: 1,
+    flexShrink: 0,
   },
-  viewBtn: {
-    background: "#1e1e1e",
-    border: "1px solid #2a2a2a",
-    borderRadius: "6px",
-    padding: "6px 9px",
+  dropdown: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    right: 0,
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "10px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+    zIndex: 100,
+    maxHeight: "280px",
+    overflowY: "auto",
+    padding: "4px",
+  },
+  dropdownItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%",
+    padding: "9px 12px",
+    background: "none",
+    border: "none",
+    borderRadius: "7px",
     cursor: "pointer",
-    color: "#666",
-    fontSize: "14px",
+    textAlign: "left",
+  },
+  dropdownItemName: {
+    flex: 1,
+    fontSize: "13px",
+    color: "#1a1a1a",
+    fontWeight: 500,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  dropdownItemDate: {
+    fontSize: "11px",
+    color: "#aaa",
+    flexShrink: 0,
+  },
+  dropdownEmpty: {
+    padding: "12px 16px",
+    fontSize: "13px",
+    color: "#aaa",
+    textAlign: "center",
   },
   grid: {
     display: "grid",
@@ -415,7 +633,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: "bold",
     color: "#ddd",
   },
-  cardMeta: { //info
+  cardMeta: {
     fontSize: "11px",
     color: "#555",
     marginTop: "8px",
@@ -425,6 +643,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: "16px",
     display: "flex",
     justifyContent: "flex-end",
+    gap: "8px",
   },
   openBtn: {
     background: "none",
@@ -433,6 +652,16 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "6px 14px",
     fontSize: "12px",
     color: "#ffffff",
+    cursor: "pointer",
+    transition: "color 0.15s, border-color 0.15s",
+  },
+  shareBtn: {
+    background: "none",
+    border: "1px solid #333",
+    borderRadius: "6px",
+    padding: "6px 14px",
+    fontSize: "12px",
+    color: "#aaa",
     cursor: "pointer",
     transition: "color 0.15s, border-color 0.15s",
   },
@@ -474,4 +703,3 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "14px",
   },
 };
-

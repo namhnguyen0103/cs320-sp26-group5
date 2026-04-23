@@ -6,6 +6,7 @@ import { db_client } from "./client"; // your Supabase client
 // Define the shape of our user in context
 type AuthUser = {
   email: string;
+  userId: string;
 };
 
 type AuthContextType = {
@@ -35,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const supaUser = sessionData?.session?.user;
-        if (supaUser?.email) {
-          setUser({ email: supaUser.email });
+        if (supaUser?.email && supaUser?.id) {
+          setUser({ email: supaUser.email, userId: supaUser.id });
         } else {
           setUser(null);
         }
@@ -52,8 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes
     const { data: listener } = db_client.auth.onAuthStateChange((_event, session) => {
       const supaUser = session?.user;
-      if (supaUser?.email) {
-        setUser({ email: supaUser.email });
+      if (supaUser?.email && supaUser?.id) {
+        setUser({ email: supaUser.email, userId: supaUser.id });
       } else {
         setUser(null);
       }

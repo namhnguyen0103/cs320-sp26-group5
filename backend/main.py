@@ -86,10 +86,38 @@ def delete_workspace(workspace_id: str):
 @app.get("/workspaces/{user_id}")
 def get_workspaces(user_id: str):
     res = db_client.table("workspaces").select("*").eq("user_id", user_id).execute()
+    owned = res.data or []
+    
+    shares = db_client.table("workspace_shares").select("workspace_id").eq("user_id", user_id).execute()
+    shared_ids = [s["workspace_id"] for s in (shares.data or [])]
+    
+    shared = []
+    if shared_ids:
+        shared_res = db_client.table("workspaces").select("*").in_("id", shared_ids).execute()
+        shared = shared_res.data or []
 
-    if not res.data:
+    if not owned and not shared:
         raise HTTPException(404, "No workspaces found")
-    return res.data
+    return owned + shared
+
+
+@app.post("/workspaces/{workspace_id}/join")
+def join_workspace(workspace_id: str, authorization: str = Header(None)):
+    user_id = get_user_id(authorization)
+    ws = db_client.table("workspaces").select("id").eq("id", workspace_id).execute()
+    
+    if not ws.data:
+        raise HTTPException(404, "Workspace not found")
+        
+    try:
+        db_client.table("workspace_shares").insert({
+            "workspace_id": workspace_id,
+            "user_id": user_id
+        }).execute()
+    except Exception:
+        pass
+
+    return {"message": "Successfully joined workspace!"}
 
 
 # ── helpers (new) ─────────────────────────────────────────────────────────────
@@ -114,8 +142,15 @@ def verify_workspace_ownership(workspace_id: str, user_id: str):
         .execute()
     if not res.data:
         raise HTTPException(404, "Workspace not found")
-    if res.data["user_id"] != user_id:
-        raise HTTPException(403, "You don't own this workspace")
+    
+    if res.data["user_id"] == user_id:
+        return 
+        
+    share = db_client.table("workspace_shares").select("*").eq("workspace_id", workspace_id).eq("user_id", user_id).execute()
+    if share.data:
+        return 
+
+    raise HTTPException(403, "You don't own this workspace")
 
 
 # ── file models (new) ─────────────────────────────────────────────────────────
@@ -143,13 +178,18 @@ def save_file(body: FileSaveRequest, authorization: str = Header(None)):
     # 1. Check if we have a real database ID from the frontend
     if body.file_id and not body.file_id.startswith("temp-"):
         # UPDATE the existing file using its ID
-        db_client.table("files") \
+        res = db_client.table("files") \
             .update({
                 "title": body.file_name, 
                 "content": body.file_contents
             }) \
             .eq("id", body.file_id) \
             .execute()
+            
+        # FIXED: Prevent silent database failures!
+        if not res.data:
+            raise HTTPException(403, "Update blocked by Supabase. You likely need to update your RLS policies to allow shared users to edit files.")
+            
         file_id = body.file_id
         
     else:
@@ -180,10 +220,9 @@ def save_file(body: FileSaveRequest, authorization: str = Header(None)):
             db_client.table("file_links").insert({
                 "source_file_id": file_id,
                 "target_file_id": target.data[0]["id"],
-                "source_file_name": body.file_name,     # <-- Added source name
-                "target_file_name": linked_name         # <-- Added target name
+                "source_file_name": body.file_name,     
+                "target_file_name": linked_name         
             }).execute()
-        # if linked file doesn't exist yet, skip silently
 
     return {"file_id": file_id, "message": "File saved"}
 
@@ -213,8 +252,8 @@ def get_file(file_id: str, authorization: str = Header(None)):
 
     if not res.data:
         raise HTTPException(404, "File not found")
-    if res.data["workspaces"]["user_id"] != user_id:
-        raise HTTPException(403, "You don't own this file")
+        
+    verify_workspace_ownership(res.data["workspace_id"], user_id)
 
     return {
         "file_id": res.data["id"],
@@ -238,15 +277,15 @@ def remove_file(file_id: str, authorization: str = Header(None)):
     user_id = get_user_id(authorization)
 
     res = db_client.table("files") \
-        .select("id, workspaces(user_id)") \
+        .select("id, workspace_id") \
         .eq("id", file_id) \
         .single() \
         .execute()
 
     if not res.data:
         raise HTTPException(404, "File not found")
-    if res.data["workspaces"]["user_id"] != user_id:
-        raise HTTPException(403, "You don't own this file")
+        
+    verify_workspace_ownership(res.data["workspace_id"], user_id)
 
     # delete links first (foreign key safety)
     db_client.table("file_links") \
@@ -267,15 +306,15 @@ def rename_file(file_id: str, body: FileRenameRequest, authorization: str = Head
     user_id = get_user_id(authorization)
 
     res = db_client.table("files") \
-        .select("id, workspaces(user_id)") \
+        .select("id, workspace_id") \
         .eq("id", file_id) \
         .single() \
         .execute()
 
     if not res.data:
         raise HTTPException(404, "File not found")
-    if res.data["workspaces"]["user_id"] != user_id:
-        raise HTTPException(403, "You don't own this file")
+        
+    verify_workspace_ownership(res.data["workspace_id"], user_id)
 
     db_client.table("files") \
         .update({"title": body.new_name}) \
