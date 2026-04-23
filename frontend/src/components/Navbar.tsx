@@ -1,7 +1,8 @@
 // src/components/Navbar.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import logoImage from "../assets/synapse_logo.png"; 
+import SearchBar from "./SearchBar";
+import logoImage from "../assets/synapse_logo.png";
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
@@ -29,6 +30,7 @@ export default function Navbar() {
         <Link style={styles.link} to="/login">Login</Link>
         <Link style={styles.link} to="/signup">Signup</Link>
       </nav>
+      <SearchBar placeholder="Search Synapse..." />
 
       {/* user, notifs, logout*/}
       <div style={styles.userArea}>
