@@ -57,6 +57,11 @@ function WorkspaceCard({
       ) : (
         <div style={styles.cardOpen}>
           <button style={styles.openBtn} onClick={() => onOpen(workspace.id)}>Open →</button>
+          <button style={styles.shareBtn} onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(workspace.id);
+            alert("Workspace ID copied! Send this to your teammate.");
+          }}>Copy ID</button>
         </div>
       )}
     </div>
@@ -96,8 +101,12 @@ export default function Home() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Create / Join State
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState("");
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [joinId, setJoinId] = useState("");
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,6 +186,27 @@ export default function Home() {
     }
   }
 
+  async function handleJoin() {
+    if (!joinId.trim()) return;
+    try {
+      const token = localStorage.getItem("access_token") || "";
+      const res = await fetch(`${API}/workspaces/${joinId.trim()}/join`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error("Failed to join");
+      
+      alert("Joined successfully!");
+      setJoinId("");
+      setShowJoinForm(false);
+      await fetchWorkspaces(); // Refresh list automatically
+    } catch (error) {
+      console.error(error);
+      alert("Error joining. Ensure the ID is correct.");
+    }
+  }
+
   function handleSearchSelect(workspace: Workspace) {
     setSearchQuery("");
     setSearchOpen(false);
@@ -246,15 +276,24 @@ export default function Home() {
               <h1 style={styles.h1}>Workspaces</h1>
               <p style={styles.subtitle}>Select a workspace to open its graph and notes.</p>
             </div>
-            <button
-              className="new-btn"
-              style={styles.newBtn}
-              onClick={() => setShowNewForm(!showNewForm)}
-            >
-              + New Workspace
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                style={styles.joinBtn}
+                onClick={() => { setShowJoinForm(!showJoinForm); setShowNewForm(false); }}
+              >
+                Join Workspace
+              </button>
+              <button
+                className="new-btn"
+                style={styles.newBtn}
+                onClick={() => { setShowNewForm(!showNewForm); setShowJoinForm(false); }}
+              >
+                + New Workspace
+              </button>
+            </div>
           </div>
 
+          {/* Creation Forms */}
           {showNewForm && (
             <div style={styles.newForm}>
               <input
@@ -267,6 +306,23 @@ export default function Home() {
               />
               <button style={styles.createBtn} onClick={handleCreate}>Create</button>
               <button style={styles.cancelBtn} onClick={() => { setShowNewForm(false); setNewName(""); }}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {showJoinForm && (
+            <div style={styles.newForm}>
+              <input
+                style={styles.input}
+                placeholder="Paste Workspace ID here..."
+                value={joinId}
+                onChange={(e) => setJoinId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                autoFocus
+              />
+              <button style={styles.createBtn} onClick={handleJoin}>Join</button>
+              <button style={styles.cancelBtn} onClick={() => { setShowJoinForm(false); setJoinId(""); }}>
                 Cancel
               </button>
             </div>
@@ -332,7 +388,7 @@ export default function Home() {
             </div>
           ) : workspaces.length === 0 ? (
             <div style={styles.empty}>
-              <p style={styles.emptyText}>No workspaces yet. Create one to get started.</p>
+              <p style={styles.emptyText}>No workspaces yet. Create or join one to get started.</p>
             </div>
           ) : (
             <div style={styles.grid}>
@@ -400,6 +456,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "13px",
     color: "#555",
     margin: 0,
+  },
+  joinBtn: {
+    padding: "9px 18px",
+    background: "transparent",
+    color: "#3DD6D0",
+    border: "1px solid #3DD6D0",
+    borderRadius: "20px",
+    fontFamily: "Mukta Vaani, sans-serif",
+    fontSize: "13px",
+    cursor: "pointer",
   },
   newBtn: {
     padding: "9px 18px",
@@ -577,6 +643,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: "16px",
     display: "flex",
     justifyContent: "flex-end",
+    gap: "8px",
   },
   openBtn: {
     background: "none",
@@ -585,6 +652,16 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "6px 14px",
     fontSize: "12px",
     color: "#ffffff",
+    cursor: "pointer",
+    transition: "color 0.15s, border-color 0.15s",
+  },
+  shareBtn: {
+    background: "none",
+    border: "1px solid #333",
+    borderRadius: "6px",
+    padding: "6px 14px",
+    fontSize: "12px",
+    color: "#aaa",
     cursor: "pointer",
     transition: "color 0.15s, border-color 0.15s",
   },
