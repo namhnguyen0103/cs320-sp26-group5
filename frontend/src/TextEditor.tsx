@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import NotesSidebar, { type Note } from "./components/NotesSidebar";
 import { db_client } from "./auth/client";
 
@@ -10,7 +10,6 @@ import Link from '@tiptap/extension-link';
 import Collaboration from '@tiptap/extension-collaboration';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
-
 
 // 1. THE NETWORK BRIDGE
 // This is the middleman between our local text editor and Supabase WebSockets
@@ -117,9 +116,11 @@ interface ActiveEditorProps {
 // headers from h1 to h6
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6; 
 
-function ActiveEditor({ 
+function ActiveEditor({
   currentNoteId, currentNote, setCurrentNote, initialHtml, onSave, onDelete, notes, onNoteClick
 }: ActiveEditorProps) {
+  const { workspaceId } = useParams();
+  const navigate = useNavigate();
   const { ydoc } = useCollaboration(currentNoteId);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -233,6 +234,7 @@ function ActiveEditor({
       <div className="toolbar">
         <button className="primary-action" onClick={handleSaveClick}>Save</button>
         <button className="danger" onClick={onDelete}>Delete File</button>
+        <button onClick={() => navigate(`/graph/${workspaceId}`)}>Graph</button>
 
         <button onClick={() => editor.chain().focus().toggleBold().run()}>Bold</button>
         <button onClick={() => editor.chain().focus().toggleItalic().run()}>Italic</button>
@@ -278,7 +280,8 @@ function ActiveEditor({
 
 export default function TextEditor() {
   const { workspaceId } = useParams();
-  
+  const [searchParams] = useSearchParams();
+
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentNote, setCurrentNote] = useState("Untitled.txt");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
@@ -305,6 +308,19 @@ export default function TextEditor() {
   }, [workspaceId]);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
+
+  // Open a specific file if ?file=<id> is in the URL (e.g. from the graph view)
+  useEffect(() => {
+    const requestedId = searchParams.get("file");
+    if (!requestedId || notes.length === 0) return;
+    const match = notes.find(n => n.id === requestedId);
+    if (match && match.id !== currentNoteId) {
+      setCurrentNoteId(match.id);
+      setCurrentNote(match.title);
+      setInitialHtml(match.content || "<p></p>");
+      setEditorKey(match.id);
+    }
+  }, [notes, searchParams, currentNoteId]);
 
   const saveToDatabase = async (latestHtml: string) => {
     // Quick DOM parse to scrape out all the tags so the Python backend can build its graph
@@ -467,11 +483,11 @@ export default function TextEditor() {
       <div className="page">
         <div className="layout">
           <NotesSidebar notes={notes} onCreateNote={handleCreateNote} onNoteClick={handleNoteClick} />
-          
+
           {editorKey ? (
-            <ActiveEditor 
-              key={editorKey} 
-              currentNoteId={currentNoteId!} 
+            <ActiveEditor
+              key={editorKey}
+              currentNoteId={currentNoteId!}
               currentNote={currentNote}
               setCurrentNote={setCurrentNote}
               initialHtml={initialHtml}

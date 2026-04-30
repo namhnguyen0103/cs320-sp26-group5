@@ -322,3 +322,29 @@ def rename_file(file_id: str, body: FileRenameRequest, authorization: str = Head
         .execute()
 
     return {"message": "File renamed", "new_name": body.new_name}
+
+
+@app.get("/workspaces/{workspace_id}/graph")
+def get_workspace_graph(workspace_id: str, authorization: str = Header(None)):
+    user_id = get_user_id(authorization)
+    verify_workspace_ownership(workspace_id, user_id)
+
+    files_res = db_client.table("files") \
+        .select("id, title") \
+        .eq("workspace_id", workspace_id) \
+        .execute()
+    nodes = [{"id": f["id"], "title": f["title"]} for f in (files_res.data or [])]
+
+    file_ids = [n["id"] for n in nodes]
+    edges = []
+    if file_ids:
+        links_res = db_client.table("file_links") \
+            .select("source_file_id, target_file_id") \
+            .in_("source_file_id", file_ids) \
+            .execute()
+        edges = [
+            {"source": l["source_file_id"], "target": l["target_file_id"]}
+            for l in (links_res.data or [])
+        ]
+
+    return {"nodes": nodes, "edges": edges}
