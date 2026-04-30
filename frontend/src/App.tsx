@@ -5,6 +5,7 @@ import Login from "./login";
 import Signup from "./signup";
 // import Dashboard from "./Dashboard";
 import Editor from "./TextEditor.tsx"
+import Graph from "./Graph";
 import { AuthProvider } from "./auth/AuthContext";
 // import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -58,6 +59,11 @@ export default function App() {
           <Route path="/editor/:workspaceId" element={
             <Layout fullWidth>
               <Editor />
+            </Layout>
+          } />
+          <Route path="/graph/:workspaceId" element={
+            <Layout fullWidth>
+              <Graph />
             </Layout>
           } />
         </Routes>
