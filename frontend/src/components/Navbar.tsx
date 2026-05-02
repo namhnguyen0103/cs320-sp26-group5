@@ -25,11 +25,11 @@ export default function Navbar() {
       </div>
 
       {/* links, might get rid of? */}
-      <nav style={styles.navLinks}>
+      {/* <nav style={styles.navLinks}>
         <Link style={styles.link} to="/">Home</Link>
         <Link style={styles.link} to="/login">Login</Link>
         <Link style={styles.link} to="/signup">Signup</Link>
-      </nav>
+      </nav> */}
       <SearchBar placeholder="Search Synapse..." />
 
       {/* user, notifs, logout*/}

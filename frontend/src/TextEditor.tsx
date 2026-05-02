@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import NotesSidebar, { type Note } from "./components/NotesSidebar";
 import { db_client } from "./auth/client";
 
@@ -8,6 +8,14 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Collaboration from '@tiptap/extension-collaboration';
+
+//other text stuff
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import { TextStyle} from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
+
+
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 
@@ -112,23 +120,34 @@ interface ActiveEditorProps {
   onDelete: () => void;
   notes: Note[];
   onNoteClick: (note: Note) => void; 
+  workspaceName: string;
 }
 
 // headers from h1 to h6
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6; 
 
 function ActiveEditor({ 
-  currentNoteId, currentNote, setCurrentNote, initialHtml, onSave, onDelete, notes, onNoteClick
+  currentNoteId, currentNote, setCurrentNote, initialHtml, onSave, onDelete, notes, onNoteClick, workspaceName
 }: ActiveEditorProps) {
+  const navigate = useNavigate();
   const { ydoc } = useCollaboration(currentNoteId);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
+  const [fontSize, setFontSize] = useState(16);
+  const [activeColor, setActiveColor] = useState('#ffffff');
+
 
   const editor = useEditor({
     extensions: [
       // We must disable history (undo/redo) so Yjs can handle it. Otherwise we might undo our teammates' typing
       StarterKit.configure({ history: false }), 
       Link.configure({ openOnClick: false }), // Stops TipTap from trying to open links in a new tab
+      Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextStyle,
+      Color,
+
       Collaboration.configure({ document: ydoc }),
     ],
     onUpdate: ({ editor }) => {
@@ -204,73 +223,275 @@ function ActiveEditor({
     }
   };
 
+  const applyFontSize = (size: number) => {
+    setFontSize(size);
+    if (editor) {
+      editor.chain().focus().setMark('textStyle', { fontSize: `${size}px` }).run();
+    }
+  };
+
+
   if (!editor) return null;
 
-  return (
-    // the following is the HTML for the editor
-    <div className="container" style={{ position: "relative" }}>
-      {dropdownVisible && (
-        <div className="tag-dropdown" style={{ top: dropdownPos.top + 5, left: dropdownPos.left, position: 'fixed' }}>
-          {notes.map((note: Note) => (
-            <button key={note.id} onClick={() => insertLink(note)}>
-              {note.title}
-            </button>
-          ))}
-        </div>
-      )}
+  const headingOptions = [
+    { label: 'Normal Text', value: 'P' },
+    { label: 'Title (36)', value: 'H1' },
+    { label: 'Heading (32)', value: 'H2' },
+    { label: 'Sub-heading (24)', value: 'H3' },
+    { label: 'H4', value: 'H4' },
+    { label: 'H5', value: 'H5' },
+    { label: 'H6', value: 'H6' },
+  ];
 
-      <h1 className="title">React Text Editor</h1>
-      <p className="subtitle" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        Editing: 
-        <input 
-          type="text" 
-          value={currentNote} 
-          onChange={(e) => setCurrentNote(e.target.value)}
-          style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontWeight: "bold", color: "#0f172a", outline: "none" }}
+
+    return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#1a1a1a', color: '#e8e8e8', fontFamily: "'Georgia', serif" }}>
+      {/* Breadcrumb / Top Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', height: '44px', background: '#111', borderBottom: '1px solid #2a2a2a', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#888' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{ background: 'none', border: 'none', color: '#3DD6D0', cursor: 'pointer', fontSize: '13px', padding: '2px 4px', borderRadius: '4px', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#1e3534')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            Workspaces
+          </button>
+          <span style={{ color: '#444' }}>/</span>
+          <span style={{ color: '#aaa' }}>{workspaceName}</span>
+          <span style={{ color: '#444' }}>/</span>
+          <span style={{ color: '#e8e8e8', fontWeight: 600 }}>{currentNote}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>Graph</button>
+          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>☰</button>
+          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>🔍 Search</button>
+          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>🔔</button>
+          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>👤</button>
+        </div>
+      </div>
+ 
+      {/* Toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '0 16px', height: '40px', background: '#161616', borderBottom: '1px solid #252525', flexShrink: 0, flexWrap: 'wrap', overflowX: 'auto' }}>
+        {/* Status */}
+        <ToolbarSelect
+          value=""
+          onChange={() => {}}
+          options={[{ label: 'Status', value: '' }, { label: 'Draft', value: 'draft' }, { label: 'Published', value: 'published' }]}
         />
-      </p>
-
-      <div className="toolbar">
-        <button className="primary-action" onClick={handleSaveClick}>Save</button>
-        <button className="danger" onClick={onDelete}>Delete File</button>
-
-        <button onClick={() => editor.chain().focus().toggleBold().run()}>Bold</button>
-        <button onClick={() => editor.chain().focus().toggleItalic().run()}>Italic</button>
-        
-        <select onChange={(e) => {
-          const val = e.target.value;
-          if (val === "P") editor.chain().focus().setParagraph().run();
-          else editor.chain().focus().toggleHeading({ level: parseInt(val.charAt(1)) as HeadingLevel }).run();
-        }}>
-          <option>Headings</option>
-          <option value="P">Paragraph</option>
-          <option value="H1">H1</option>
-          <option value="H2">H2</option>
-        </select>
-
-        <button onClick={() => editor.chain().focus().toggleBulletList().run()}>Bullet</button>
-        <button onClick={() => editor.chain().focus().toggleOrderedList().run()}>Numbered</button>
-        <button onClick={() => {
-          const url = window.prompt("Enter URL");
-          if (url) editor.chain().focus().setLink({ href: url }).run();
-        }}>Link</button>
-        <button onClick={() => editor.chain().focus().unsetLink().run()}>Unlink</button>
-        <button onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}>Clear</button>
-      </div>
-
-      <div className="grid">
-        <div onClick={handleEditorClick}>
-          <h2 className="section">Editor</h2>
-          <EditorContent editor={editor} className="editor" />
+ 
+        <ToolbarDivider />
+ 
+        {/* Heading selector */}
+        <ToolbarSelect
+          value="P"
+          onChange={(val) => {
+            if (val === 'P') editor.chain().focus().setParagraph().run();
+            else editor.chain().focus().toggleHeading({ level: parseInt(val.charAt(1)) as HeadingLevel }).run();
+          }}
+          options={headingOptions}
+          minWidth="120px"
+        />
+ 
+        <ToolbarDivider />
+ 
+        {/* Font size */}
+        <button onClick={() => applyFontSize(Math.max(8, fontSize - 1))} style={tbBtn}>–</button>
+        <span style={{ fontSize: '12px', color: '#888', minWidth: '20px', textAlign: 'center' }}>{fontSize}</span>
+        <button onClick={() => applyFontSize(fontSize + 1)} style={tbBtn}>+</button>
+ 
+        <ToolbarDivider />
+ 
+        {/* Bold / Italic / Underline */}
+        <button
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          style={{ ...tbBtn, fontWeight: 'bold', color: editor.isActive('bold') ? '#3DD6D0' : '#ccc' }}
+          title="Bold"
+        >B</button>
+        <button
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          style={{ ...tbBtn, fontStyle: 'italic', color: editor.isActive('italic') ? '#3DD6D0' : '#ccc' }}
+          title="Italic"
+        >I</button>
+        <button
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          style={{ ...tbBtn, textDecoration: 'underline', color: editor.isActive('underline') ? '#3DD6D0' : '#ccc' }}
+          title="Underline"
+        >U</button>
+ 
+        <ToolbarDivider />
+ 
+        {/* Color picker */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: '#888' }}>Color</span>
+          <input
+            type="color"
+            value={activeColor}
+            onChange={(e) => {
+              setActiveColor(e.target.value);
+              editor.chain().focus().setColor(e.target.value).run();
+            }}
+            style={{ width: '24px', height: '18px', border: '1px solid #333', borderRadius: '3px', background: 'none', cursor: 'pointer', padding: 0 }}
+            title="Text Color"
+          />
         </div>
-        <div>
-          <h2 className="section">Saved HTML</h2>
-          <textarea value={editor.getHTML()} readOnly className="html" />
+ 
+        <ToolbarDivider />
+ 
+        {/* Lists */}
+        <button onClick={() => editor.chain().focus().toggleBulletList().run()} style={{ ...tbBtn, color: editor.isActive('bulletList') ? '#3DD6D0' : '#ccc' }} title="Bullet List">≡</button>
+        <button onClick={() => editor.chain().focus().toggleOrderedList().run()} style={{ ...tbBtn, color: editor.isActive('orderedList') ? '#3DD6D0' : '#ccc' }} title="Numbered List">⁋</button>
+ 
+        <ToolbarDivider />
+ 
+        {/* Alignment */}
+        <button onClick={() => editor.chain().focus().setTextAlign('left').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'left' }) ? '#3DD6D0' : '#ccc' }} title="Align Left">⬅</button>
+        <button onClick={() => editor.chain().focus().setTextAlign('center').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'center' }) ? '#3DD6D0' : '#ccc' }} title="Align Center">☰</button>
+        <button onClick={() => editor.chain().focus().setTextAlign('right').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'right' }) ? '#3DD6D0' : '#ccc' }} title="Align Right">➡</button>
+        <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'justify' }) ? '#3DD6D0' : '#ccc' }} title="Justify">▤</button>
+ 
+        <ToolbarDivider />
+ 
+        {/* Clear Editor */}
+        <button
+          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().setContent('<p></p>').run()}
+          style={{ ...tbBtn, color: '#888', fontSize: '11px' }}
+          title="Clear Editor"
+        >Clear Editor</button>
+ 
+        <ToolbarDivider />
+ 
+        {/* Download */}
+        <button
+          onClick={() => {
+            const blob = new Blob([editor.getHTML()], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `${currentNote}.html`; a.click();
+            URL.revokeObjectURL(url);
+          }}
+          style={{ ...tbBtn, color: '#888', fontSize: '11px' }}
+        >Download ▾</button>
+ 
+        {/* Save */}
+        <button
+          onClick={handleSaveClick}
+          style={{ ...tbBtn, color: '#e8e8e8', marginLeft: '4px', fontSize: '11px' }}
+        >Save</button>
+      </div>
+ 
+      {/* Editor Area */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 60px 40px', position: 'relative' }}>
+        {dropdownVisible && (
+          <div style={{ position: 'fixed', top: dropdownPos.top + 5, left: dropdownPos.left, background: '#222', border: '1px solid #333', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', flexDirection: 'column', padding: '4px', minWidth: '160px' }}>
+            {notes.map((note: Note) => (
+              <button
+                key={note.id}
+                onClick={() => insertLink(note)}
+                style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '4px', color: '#e8e8e8', fontSize: '13px' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                {note.title}
+              </button>
+            ))}
+          </div>
+        )}
+ 
+        {/* Note title editable */}
+        <div style={{ paddingTop: '40px', marginBottom: '8px' }}>
+          <input
+            type="text"
+            value={currentNote}
+            onChange={(e) => setCurrentNote(e.target.value)}
+            style={{ fontSize: '32px', fontWeight: 'bold', color: '#f0f0f0', background: 'none', border: 'none', outline: 'none', width: '100%', fontFamily: "'Georgia', serif" }}
+            placeholder="Untitled"
+          />
+        </div>
+ 
+        <div onClick={handleEditorClick} style={{ cursor: 'text' }}>
+          <EditorContent editor={editor} />
         </div>
       </div>
+ 
+      <style>{`
+        .ProseMirror {
+          min-height: 60vh;
+          outline: none;
+          font-size: 16px;
+          line-height: 1.75;
+          color: #d8d8d8;
+          font-family: 'Georgia', serif;
+          caret-color: #3DD6D0;
+        }
+        .ProseMirror p { margin: 0 0 0.5em; }
+        .ProseMirror h1 { font-size: 36px; font-weight: bold; color: #f0f0f0; margin: 0.6em 0 0.3em; }
+        .ProseMirror h2 { font-size: 32px; font-weight: bold; color: #eee; margin: 0.6em 0 0.3em; }
+        .ProseMirror h3 { font-size: 24px; font-weight: 600; color: #ddd; margin: 0.5em 0 0.2em; }
+        .ProseMirror h4 { font-size: 20px; font-weight: 600; color: #ccc; }
+        .ProseMirror h5 { font-size: 18px; font-weight: 600; color: #bbb; }
+        .ProseMirror h6 { font-size: 16px; font-weight: 600; color: #aaa; }
+        .ProseMirror a { color: #3DD6D0; text-decoration: underline; text-underline-offset: 2px; }
+        .ProseMirror a[href^="#note:"] {
+          background: rgba(61,214,208,0.1);
+          color: #3DD6D0;
+          border: 1px solid rgba(61,214,208,0.3);
+          border-radius: 4px;
+          padding: 2px 6px;
+          margin: 0 2px;
+          cursor: pointer;
+          font-size: 0.9em;
+          display: inline-block;
+          user-select: none;
+          text-decoration: none;
+        }
+        .ProseMirror ul { list-style: disc; padding-left: 24px; }
+        .ProseMirror ol { list-style: decimal; padding-left: 24px; }
+        .ProseMirror blockquote { border-left: 3px solid #3DD6D0; padding-left: 16px; color: #888; }
+        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: monospace; color: #3DD6D0; }
+        .ProseMirror strong { color: #f0f0f0; }
+        .ProseMirror em { color: #c8c8c8; }
+      `}</style>
     </div>
   );
 }
+//helper functions: 
+
+// shared toolbar button style
+const tbBtn: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#ccc',
+  cursor: 'pointer',
+  padding: '3px 7px',
+  borderRadius: '4px',
+  fontSize: '13px',
+  lineHeight: 1,
+  transition: 'background 0.1s',
+};
+ 
+function ToolbarDivider() {
+  return <div style={{ width: '1px', height: '16px', background: '#2a2a2a', margin: '0 4px', flexShrink: 0 }} />;
+}
+
+function ToolbarSelect({ value, onChange, options, minWidth = '90px' }: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { label: string; value: string }[];
+  minWidth?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ background: '#1e1e1e', border: '1px solid #2a2a2a', color: '#ccc', borderRadius: '5px', padding: '2px 6px', fontSize: '12px', cursor: 'pointer', minWidth, outline: 'none' }}
+    >
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+
 
 
 // 3. THE MAIN PAGE
@@ -280,6 +501,8 @@ export default function TextEditor() {
   const { workspaceId } = useParams();
   
   const [notes, setNotes] = useState<Note[]>([]);
+  //workspace name
+  const [workspaceName, setWorkspaceName] = useState("Workspace 1");
   const [currentNote, setCurrentNote] = useState("Untitled.txt");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   
@@ -299,6 +522,7 @@ export default function TextEditor() {
       if (!res.ok) throw new Error("Failed to fetch files");
       const data = await res.json();
       setNotes(data); 
+      if (data.workspaceName) setWorkspaceName(data.workspaceName);
     } catch (error) {
       console.error(error);
     }
@@ -423,70 +647,79 @@ export default function TextEditor() {
   };
 
   return (
-    <>
-      <style>{`
-        /* ... existing styles ... */
-        .page{ min-height:100vh; background:#f1f5f9; padding:20px; }
-        .layout{ width:100%; display:grid; grid-template-columns:280px minmax(0, 1fr); gap:20px; align-items:start; }
-        .notesSidebar{ background:white; border-radius:20px; padding:16px; box-shadow:0 10px 25px rgba(0,0,0,0.08); position:sticky; top:20px; }
-        .newNoteButton{ width:100%; background:#0f172a; color:white; border:none; border-radius:10px; padding:10px 12px; font-weight:600; cursor:pointer; }
-        .notesList{ margin-top:14px; display:flex; flex-direction:column; gap:8px; max-height:70vh; overflow:auto; }
-        .noteEntryButton{ text-align:left; width:100%; border:1px solid #cbd5e1; background:#f8fafc; border-radius:10px; padding:9px 11px; cursor:pointer; font-weight:500; color:#0f172a; }
-        .container{ width:100%; background:white; padding:25px; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,0.08); }
-        .title{ font-size:36px; font-weight:bold; color:#0f172a; }
-        .subtitle{ margin-top:8px; color:#64748b; }
-        .toolbar{ margin-top:20px; display:flex; flex-wrap:wrap; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:15px; }
-        .toolbar button, .toolbar select{ background:white; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:500; }
-        .primary-action { background: #4f46e5 !important; color: white; border: 1px solid #4338ca !important; }
-        .danger{ background:#fef2f2; border:1px solid #fecaca; color:#dc2626; }
-        .grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
-        .section{ font-size:20px; font-weight:600; color:#1e293b; margin-bottom: 10px; }
-        .html{ min-height:360px; width:100%; border-radius:15px; border:1px solid #cbd5e1; padding:15px; background:#f8fafc; font-family:monospace; }
-        .tag-dropdown { background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; display: flex; flex-direction: column; padding: 4px; min-width: 150px; }
-        .tag-dropdown button { padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; border-radius: 4px; }
-        .tag-dropdown button:hover { background: #f1f5f9; }
-
-        a[href^="#note:"] { 
-          background: #eef2ff; 
-          color: #4f46e5; 
-          border: 1px solid #c7d2fe; 
-          border-radius: 4px; 
-          padding: 2px 6px; 
-          margin: 0 2px; 
-          cursor: pointer; 
-          font-size: 0.9em; 
-          display: inline-block; 
-          user-select: none; 
-          text-decoration: none;
-        }
-
-        .ProseMirror { min-height: 340px; border: 1px solid #cbd5e1; border-radius: 15px; padding: 15px; outline: none; background: white; }
-        .ProseMirror:focus { border-color: #94a3b8; }
-      `}</style>
-
-      <div className="page">
-        <div className="layout">
-          <NotesSidebar notes={notes} onCreateNote={handleCreateNote} onNoteClick={handleNoteClick} />
-          
-          {editorKey ? (
-            <ActiveEditor 
-              key={editorKey} 
-              currentNoteId={currentNoteId!} 
-              currentNote={currentNote}
-              setCurrentNote={setCurrentNote}
-              initialHtml={initialHtml}
-              onSave={handleSave}
-              onDelete={handleDelete}
-              notes={notes}
-              onNoteClick={handleNoteClick}
-            />
-          ) : (
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: '#64748b', fontSize: '18px' }}>Select or create a note to begin.</p>
-            </div>
-          )}
+        <div style={{ display: 'flex', height: '100vh', background: '#111', overflow: 'hidden', fontFamily: "'Georgia', serif" }}>
+      {/* Sidebar */}
+      <div style={{ width: '220px', background: '#141414', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        {/* Sidebar Header */}
+        <div style={{ padding: '16px 14px 8px', borderBottom: '1px solid #222' }}>
+          <button
+            onClick={handleCreateNote}
+            style={{ width: '100%', background: '#3DD6D0', color: '#0a1f1e', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', letterSpacing: '0.02em', transition: 'opacity 0.15s' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            + New Note
+          </button>
+        </div>
+ 
+        {/* Notes list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
+          {notes.map(note => (
+            <button
+              key={note.id}
+              onClick={() => handleNoteClick(note)}
+              style={{
+                width: '100%', textAlign: 'left', background: note.id === currentNoteId ? '#1e2e2d' : 'none',
+                border: 'none', borderRadius: '6px', padding: '7px 10px', cursor: 'pointer',
+                color: note.id === currentNoteId ? '#3DD6D0' : '#999', fontSize: '13px',
+                fontWeight: note.id === currentNoteId ? 600 : 400, transition: 'all 0.15s',
+                marginBottom: '2px',
+              }}
+              onMouseEnter={e => { if (note.id !== currentNoteId) e.currentTarget.style.color = '#ccc'; }}
+              onMouseLeave={e => { if (note.id !== currentNoteId) e.currentTarget.style.color = '#999'; }}
+            >
+              {note.title}
+            </button>
+          ))}
+        </div>
+ 
+        {/* Bottom actions */}
+        <div style={{ borderTop: '1px solid #222', padding: '10px 8px' }}>
+          <button style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', padding: '7px 10px', borderRadius: '6px' }}>
+            ❓ Help
+          </button>
+          <button
+            onClick={() => navigate('/login')}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', padding: '7px 10px', borderRadius: '6px' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#ccc')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#666')}
+          >
+            🚪 Logout
+          </button>
         </div>
       </div>
-    </>
+ 
+      {/* Main content */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {editorKey ? (
+          <ActiveEditor
+            key={editorKey}
+            currentNoteId={currentNoteId!}
+            currentNote={currentNote}
+            setCurrentNote={setCurrentNote}
+            initialHtml={initialHtml}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            notes={notes}
+            onNoteClick={handleNoteClick}
+            workspaceName={workspaceName}
+          />
+        ) : (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '16px' }}>
+            Select or create a note to begin.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
