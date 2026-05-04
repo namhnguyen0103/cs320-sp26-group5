@@ -234,6 +234,8 @@ function ActiveEditor({
     }
   });
 
+
+
   // THE FALLBACK TIMER
   // WebSockets forget data when the room is empty
   // We wait 1 sec to see if anyone beams us live text. If nobody does, we are alone, so load the text from Supabase
@@ -335,7 +337,7 @@ function ActiveEditor({
       {/* Toolbar */}
       <div className="te-toolbar">
         {/* Status */}
-        <ToolbarSelect
+        <ToolbarSelect 
           value=""
           onChange={() => {}}
           options={[{ label: 'Status', value: '' }, { label: 'Draft', value: 'draft' }, { label: 'Published', value: 'published' }]}
@@ -344,7 +346,7 @@ function ActiveEditor({
         <ToolbarDivider />
  
         {/* Heading selector */}
-        <ToolbarSelect
+        <ToolbarSelect 
           value="P"
           onChange={(val) => {
             if (val === 'P') editor.chain().focus().setParagraph().run();
@@ -352,6 +354,7 @@ function ActiveEditor({
           }}
           options={headingOptions}
           minWidth="120px"
+           
         />
  
         <ToolbarDivider />
@@ -377,7 +380,7 @@ function ActiveEditor({
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`te-tb-btn te-underline-btn ${editor.isActive('underline') ? 'active' : ''}`}
-          title="Underline"
+          title="Underline" style={{ textDecoration: "underline" }}
         >U</button>
  
         <ToolbarDivider />
@@ -385,7 +388,7 @@ function ActiveEditor({
         {/* Color picker */}
         <div className="te-color-container">
           <span className="te-color-label">Color</span>
-          <input
+          <input 
             type="color"
             value={activeColor}
             onChange={(e) => {
@@ -420,18 +423,6 @@ function ActiveEditor({
         >Clear Editor</button>
  
         <ToolbarDivider />
- 
-        {/* Download */}
-        <button
-          onClick={() => {
-            const blob = new Blob([editor.getHTML()], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `${currentNote}.html`; a.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="te-tb-btn te-utility-btn"
-        >Download ▾</button>
  
         {/* Save */}
         <button
@@ -650,15 +641,18 @@ export default function TextEditor() {
     setEditorKey(note.id); // Re-mount the editor now that we securely have the fresh text
   };
 
+  
+
   return (
     <>
       <style>{`
-        .te-app-root { display: flex; height: 100vh; background: #111; overflow: hidden; font-family: 'Georgia', serif; }
+       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        .te-app-root { display: flex; height: 100vh; background: #111; overflow: hidden; font-family: "Mukta Vaani, sans-serif"; }
         
         /* Sidebar Styles */
         .te-sidebar { width: 220px; background: #141414; border-right: 1px solid #222; display: flex; flexDirection: column; flex-shrink: 0; }
         .te-sidebar-header { padding: 16px 14px 8px; border-bottom: 1px solid #222; }
-        .te-new-note-btn { width: 100%; background: #3DD6D0; color: #0a1f1e; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.02em; transition: opacity 0.15s; }
+        .te-new-note-btn { font-family: "Mukta Vaani, sans-serif"; width: 100%; background: #3DD6D0; color: #0a1f1e; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.02em; transition: opacity 0.15s; }
         .te-new-note-btn:hover { opacity: 0.85; }
         .te-note-list { flex: 1; overflow-y: auto; padding: 8px 8px; }
         .te-note-item { width: 100%; text-align: left; border: none; border-radius: 6px; padding: 7px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; margin-bottom: 2px; }
@@ -674,14 +668,17 @@ export default function TextEditor() {
         .te-empty-state { flex: 1; display: flex; alignItems: center; justifyContent: center; color: #444; fontSize: 16px; }
 
         /* Active Editor UI */
-        .te-active-root { display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: #e8e8e8; font-family: 'Georgia', serif; }
+        .te-active-root { display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: #e8e8e8; font-family: "Mukta Vaani, sans-serif"; }
         .te-top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 44px; background: #111; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
         .te-breadcrumb { display: flex; align-items: center; gap: 6px; fontSize: 13px; color: #888; }
         .te-breadcrumb-home { background: none; border: none; color: #3DD6D0; cursor: pointer; fontSize: 13px; padding: 2px 4px; borderRadius: 4px; transition: background 0.15s; }
         .te-breadcrumb-home:hover { background: #1e3534; }
         .te-slash { color: #444; }
-        .te-workspace-name { color: #aaa; }
-        .te-current-filename { color: #e8e8e8; font-weight: 600; }
+        .te-workspace-name { color: #ffffff; font-family: "Mukta Vaani, sans-serif"; }
+        .te-current-filename { 
+        font-family: "Mukta Vaani, sans-serif";
+         color: #ffffff; 
+         font-weight: 500; }
         .te-top-actions { display: flex; gap: 10px; align-items: center; }
         .te-icon-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 13px; }
         .te-search-pill {
@@ -707,23 +704,29 @@ export default function TextEditor() {
         .te-font-display { font-size: 12px; color: #888; min-width: 20px; text-align: center; }
         .te-color-container { display: flex; align-items: center; gap: 4px; }
         .te-color-label { font-size: 12px; color: #888; }
-        .te-color-picker { width: 24px; height: 18px; border: 1px solid #333; border-radius: 3px; background: none; cursor: pointer; padding: 0; }
+        .te-color-picker { 
+          width: 20px; 
+          height: 20px; 
+          border: 1px solid #333; 
+          border-radius: 3px; 
+          background: none; cursor: pointer; padding: 0px;
+         }
         .te-utility-btn { color: #888; font-size: 11px; }
         .te-save-main-btn { color: #e8e8e8; margin-left: 4px; font-size: 11px; }
 
         /* Editor Scroll Area */
         .te-main-scroll { flex: 1; overflow: auto; padding: 0 60px 40px; position: relative; }
         .te-title-container { padding-top: 40px; margin-bottom: 8px; }
-        .te-main-title-input { font-size: 32px; font-weight: bold; color: #f0f0f0; background: none; border: none; outline: none; width: 100%; font-family: 'Georgia', serif; }
+        .te-main-title-input { font-size: 32px; font-weight: bold; color: #f0f0f0; background: none; border: none; outline: none; width: 100%; font-family: "Mukta Vaani, sans-serif"; }
         .te-editor-wrapper { cursor: text; }
 
         /* Tag Dropdown */
-        .te-tag-dropdown { position: fixed; background: #222; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; display: flex; flexDirection: column; padding: 4px; min-width: 160px; }
+        .te-tag-dropdown { background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; display: flex; flex-direction: column; padding: 4px; min-width: 150px; }
         .te-tag-option { padding: 8px 12px; textAlign: left; border: none; background: none; cursor: pointer; borderRadius: 4px; color: #e8e8e8; fontSize: 13px; }
         .te-tag-option:hover { background: #2a2a2a; }
 
         /* TipTap Core Styles */
-        .ProseMirror { min-height: 60vh; outline: none; font-size: 16px; line-height: 1.75; color: #d8d8d8; font-family: 'Georgia', serif; caret-color: #3DD6D0; }
+        .ProseMirror { min-height: 60vh; outline: none; font-size: 16px; line-height: 1.75; color: #d8d8d8; font-family: "Mukta Vaani, sans-serif"; caret-color: #ffffff; }
         .ProseMirror p { margin: 0 0 0.5em; }
         .ProseMirror h1 { font-size: 36px; font-weight: bold; color: #f0f0f0; margin: 0.6em 0 0.3em; }
         .ProseMirror h2 { font-size: 32px; font-weight: bold; color: #eee; margin: 0.6em 0 0.3em; }
@@ -733,7 +736,7 @@ export default function TextEditor() {
         .ProseMirror ul { list-style: disc; padding-left: 24px; }
         .ProseMirror ol { list-style: decimal; padding-left: 24px; }
         .ProseMirror blockquote { border-left: 3px solid #3DD6D0; padding-left: 16px; color: #888; }
-        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: monospace; color: #3DD6D0; }
+        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: "Mukta Vaani, sans-serif; color: #3DD6D0; }
         .ProseMirror strong { color: #f0f0f0; }
         .ProseMirror em { color: #c8c8c8; }
       `}</style>
