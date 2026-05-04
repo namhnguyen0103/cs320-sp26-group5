@@ -18,7 +18,75 @@ import Color from '@tiptap/extension-color';
 
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
+//icons
+//icons
+const IconGraph = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <circle cx="3" cy="13" r="2" stroke="currentColor" strokeWidth="1.3" />
+    <circle cx="13" cy="3" r="2" stroke="currentColor" strokeWidth="1.3" />
+    <circle cx="13" cy="13" r="2" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M5 12l6-8M5 13h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+ 
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M10 10l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+ 
+const IconBell = () => (
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <path d="M8 1a5 5 0 015 5v3l1 1v1H2v-1l1-1V6a5 5 0 015-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    <path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.3" />
+  </svg>
+);
 
+const IconUser = () => (
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+ 
+const IconChevron = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+ 
+const IconBullet = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <circle cx="3" cy="5" r="1.5" fill="currentColor" />
+    <circle cx="3" cy="11" r="1.5" fill="currentColor" />
+    <path d="M7 5h7M7 11h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+
+const IconNumbered = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M2 3h2v6H2M7 5h7M7 11h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+ 
+const IconAlignLeft = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+ 
+const IconAlignCenter = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M2 4h12M4 8h8M3 12h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+
+const IconAlignRight = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <path d="M2 4h12M6 8h8M4 12h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
 
 // 1. THE NETWORK BRIDGE
 // This is the middleman between our local text editor and Supabase WebSockets
@@ -245,34 +313,27 @@ function ActiveEditor({
 
 
     return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#1a1a1a', color: '#e8e8e8', fontFamily: "'Georgia', serif" }}>
+    <div className="te-active-root">
       {/* Breadcrumb / Top Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', height: '44px', background: '#111', borderBottom: '1px solid #2a2a2a', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#888' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'none', border: 'none', color: '#3DD6D0', cursor: 'pointer', fontSize: '13px', padding: '2px 4px', borderRadius: '4px', transition: 'background 0.15s' }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#1e3534')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-          >
+      <div className="te-top-nav">
+        <div className="te-breadcrumb">
+          <button onClick={() => navigate('/')} className="te-breadcrumb-home">
             Workspaces
           </button>
-          <span style={{ color: '#444' }}>/</span>
-          <span style={{ color: '#aaa' }}>{workspaceName}</span>
-          <span style={{ color: '#444' }}>/</span>
-          <span style={{ color: '#e8e8e8', fontWeight: 600 }}>{currentNote}</span>
+          <span className="te-slash">/</span>
+          <span className="te-workspace-name">{workspaceName}</span>
+          <span className="te-slash">/</span>
+          <span className="te-current-filename">{currentNote}</span>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>Graph</button>
-          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>☰</button>
-          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>🔍 Search</button>
-          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>🔔</button>
-          <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>👤</button>
+        <div className="te-top-actions">
+          <button className="te-icon-btn"><IconGraph /></button>
+          <button className="te-search-pill"><IconSearch /> Search<IconSearch /></button>
+          <button className="te-icon-btn"><IconUser /></button>
         </div>
       </div>
  
       {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '0 16px', height: '40px', background: '#161616', borderBottom: '1px solid #252525', flexShrink: 0, flexWrap: 'wrap', overflowX: 'auto' }}>
+      <div className="te-toolbar">
         {/* Status */}
         <ToolbarSelect
           value=""
@@ -296,34 +357,34 @@ function ActiveEditor({
         <ToolbarDivider />
  
         {/* Font size */}
-        <button onClick={() => applyFontSize(Math.max(8, fontSize - 1))} style={tbBtn}>–</button>
-        <span style={{ fontSize: '12px', color: '#888', minWidth: '20px', textAlign: 'center' }}>{fontSize}</span>
-        <button onClick={() => applyFontSize(fontSize + 1)} style={tbBtn}>+</button>
+        <button onClick={() => applyFontSize(Math.max(8, fontSize - 1))} className="te-tb-btn">–</button>
+        <span className="te-font-display">{fontSize}</span>
+        <button onClick={() => applyFontSize(fontSize + 1)} className="te-tb-btn">+</button>
  
         <ToolbarDivider />
  
         {/* Bold / Italic / Underline */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          style={{ ...tbBtn, fontWeight: 'bold', color: editor.isActive('bold') ? '#3DD6D0' : '#ccc' }}
+          className={`te-tb-btn te-bold-btn ${editor.isActive('bold') ? 'active' : ''}`}
           title="Bold"
         >B</button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          style={{ ...tbBtn, fontStyle: 'italic', color: editor.isActive('italic') ? '#3DD6D0' : '#ccc' }}
+          className={`te-tb-btn te-italic-btn ${editor.isActive('italic') ? 'active' : ''}`}
           title="Italic"
         >I</button>
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          style={{ ...tbBtn, textDecoration: 'underline', color: editor.isActive('underline') ? '#3DD6D0' : '#ccc' }}
+          className={`te-tb-btn te-underline-btn ${editor.isActive('underline') ? 'active' : ''}`}
           title="Underline"
         >U</button>
  
         <ToolbarDivider />
  
         {/* Color picker */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '12px', color: '#888' }}>Color</span>
+        <div className="te-color-container">
+          <span className="te-color-label">Color</span>
           <input
             type="color"
             value={activeColor}
@@ -331,7 +392,7 @@ function ActiveEditor({
               setActiveColor(e.target.value);
               editor.chain().focus().setColor(e.target.value).run();
             }}
-            style={{ width: '24px', height: '18px', border: '1px solid #333', borderRadius: '3px', background: 'none', cursor: 'pointer', padding: 0 }}
+            className="te-color-picker"
             title="Text Color"
           />
         </div>
@@ -339,23 +400,22 @@ function ActiveEditor({
         <ToolbarDivider />
  
         {/* Lists */}
-        <button onClick={() => editor.chain().focus().toggleBulletList().run()} style={{ ...tbBtn, color: editor.isActive('bulletList') ? '#3DD6D0' : '#ccc' }} title="Bullet List">≡</button>
-        <button onClick={() => editor.chain().focus().toggleOrderedList().run()} style={{ ...tbBtn, color: editor.isActive('orderedList') ? '#3DD6D0' : '#ccc' }} title="Numbered List">⁋</button>
+        <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`te-tb-btn ${editor.isActive('bulletList') ? 'active' : ''}`} title="Bullet List"><IconBullet /></button>
+        <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`te-tb-btn ${editor.isActive('orderedList') ? 'active' : ''}`} title="Numbered List"><IconNumbered /></button>
  
         <ToolbarDivider />
  
         {/* Alignment */}
-        <button onClick={() => editor.chain().focus().setTextAlign('left').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'left' }) ? '#3DD6D0' : '#ccc' }} title="Align Left">⬅</button>
-        <button onClick={() => editor.chain().focus().setTextAlign('center').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'center' }) ? '#3DD6D0' : '#ccc' }} title="Align Center">☰</button>
-        <button onClick={() => editor.chain().focus().setTextAlign('right').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'right' }) ? '#3DD6D0' : '#ccc' }} title="Align Right">➡</button>
-        <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} style={{ ...tbBtn, color: editor.isActive({ textAlign: 'justify' }) ? '#3DD6D0' : '#ccc' }} title="Justify">▤</button>
+        <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'left' }) ? 'active' : ''}`} title="Align Left"><IconAlignLeft /></button>
+        <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'center' }) ? 'active' : ''}`} title="Align Center"><IconAlignCenter /></button>
+        <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'right' }) ? 'active' : ''}`} title="Align Right"><IconAlignRight /></button>
  
         <ToolbarDivider />
  
         {/* Clear Editor */}
         <button
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().setContent('<p></p>').run()}
-          style={{ ...tbBtn, color: '#888', fontSize: '11px' }}
+          className="te-tb-btn te-utility-btn"
           title="Clear Editor"
         >Clear Editor</button>
  
@@ -370,27 +430,25 @@ function ActiveEditor({
             a.href = url; a.download = `${currentNote}.html`; a.click();
             URL.revokeObjectURL(url);
           }}
-          style={{ ...tbBtn, color: '#888', fontSize: '11px' }}
+          className="te-tb-btn te-utility-btn"
         >Download ▾</button>
  
         {/* Save */}
         <button
           onClick={handleSaveClick}
-          style={{ ...tbBtn, color: '#e8e8e8', marginLeft: '4px', fontSize: '11px' }}
+          className="te-tb-btn te-save-main-btn"
         >Save</button>
       </div>
  
       {/* Editor Area */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 60px 40px', position: 'relative' }}>
+      <div className="te-main-scroll">
         {dropdownVisible && (
-          <div style={{ position: 'fixed', top: dropdownPos.top + 5, left: dropdownPos.left, background: '#222', border: '1px solid #333', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', flexDirection: 'column', padding: '4px', minWidth: '160px' }}>
+          <div className="te-tag-dropdown" style={{ top: dropdownPos.top + 5, left: dropdownPos.left }}>
             {notes.map((note: Note) => (
               <button
                 key={note.id}
                 onClick={() => insertLink(note)}
-                style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '4px', color: '#e8e8e8', fontSize: '13px' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                className="te-tag-option"
               >
                 {note.title}
               </button>
@@ -399,79 +457,26 @@ function ActiveEditor({
         )}
  
         {/* Note title editable */}
-        <div style={{ paddingTop: '40px', marginBottom: '8px' }}>
+        <div className="te-title-container">
           <input
             type="text"
             value={currentNote}
             onChange={(e) => setCurrentNote(e.target.value)}
-            style={{ fontSize: '32px', fontWeight: 'bold', color: '#f0f0f0', background: 'none', border: 'none', outline: 'none', width: '100%', fontFamily: "'Georgia', serif" }}
+            className="te-main-title-input"
             placeholder="Untitled"
           />
         </div>
  
-        <div onClick={handleEditorClick} style={{ cursor: 'text' }}>
+        <div onClick={handleEditorClick} className="te-editor-wrapper">
           <EditorContent editor={editor} />
         </div>
       </div>
- 
-      <style>{`
-        .ProseMirror {
-          min-height: 60vh;
-          outline: none;
-          font-size: 16px;
-          line-height: 1.75;
-          color: #d8d8d8;
-          font-family: 'Georgia', serif;
-          caret-color: #3DD6D0;
-        }
-        .ProseMirror p { margin: 0 0 0.5em; }
-        .ProseMirror h1 { font-size: 36px; font-weight: bold; color: #f0f0f0; margin: 0.6em 0 0.3em; }
-        .ProseMirror h2 { font-size: 32px; font-weight: bold; color: #eee; margin: 0.6em 0 0.3em; }
-        .ProseMirror h3 { font-size: 24px; font-weight: 600; color: #ddd; margin: 0.5em 0 0.2em; }
-        .ProseMirror h4 { font-size: 20px; font-weight: 600; color: #ccc; }
-        .ProseMirror h5 { font-size: 18px; font-weight: 600; color: #bbb; }
-        .ProseMirror h6 { font-size: 16px; font-weight: 600; color: #aaa; }
-        .ProseMirror a { color: #3DD6D0; text-decoration: underline; text-underline-offset: 2px; }
-        .ProseMirror a[href^="#note:"] {
-          background: rgba(61,214,208,0.1);
-          color: #3DD6D0;
-          border: 1px solid rgba(61,214,208,0.3);
-          border-radius: 4px;
-          padding: 2px 6px;
-          margin: 0 2px;
-          cursor: pointer;
-          font-size: 0.9em;
-          display: inline-block;
-          user-select: none;
-          text-decoration: none;
-        }
-        .ProseMirror ul { list-style: disc; padding-left: 24px; }
-        .ProseMirror ol { list-style: decimal; padding-left: 24px; }
-        .ProseMirror blockquote { border-left: 3px solid #3DD6D0; padding-left: 16px; color: #888; }
-        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: monospace; color: #3DD6D0; }
-        .ProseMirror strong { color: #f0f0f0; }
-        .ProseMirror em { color: #c8c8c8; }
-      `}</style>
     </div>
   );
 }
-//helper functions: 
 
-// shared toolbar button style
-const tbBtn: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  color: '#ccc',
-  cursor: 'pointer',
-  padding: '3px 7px',
-  borderRadius: '4px',
-  fontSize: '13px',
-  lineHeight: 1,
-  transition: 'background 0.1s',
-};
- 
 function ToolbarDivider() {
-  return <div style={{ width: '1px', height: '16px', background: '#2a2a2a', margin: '0 4px', flexShrink: 0 }} />;
+  return <div className="te-divider" />;
 }
 
 function ToolbarSelect({ value, onChange, options, minWidth = '90px' }: {
@@ -484,14 +489,13 @@ function ToolbarSelect({ value, onChange, options, minWidth = '90px' }: {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      style={{ background: '#1e1e1e', border: '1px solid #2a2a2a', color: '#ccc', borderRadius: '5px', padding: '2px 6px', fontSize: '12px', cursor: 'pointer', minWidth, outline: 'none' }}
+      className="te-select"
+      style={{ minWidth }}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   );
 }
-
-
 
 
 // 3. THE MAIN PAGE
@@ -502,7 +506,7 @@ export default function TextEditor() {
   
   const [notes, setNotes] = useState<Note[]>([]);
   //workspace name
-  const [workspaceName, setWorkspaceName] = useState("Workspace 1");
+  const [workspaceName, setWorkspaceName] = useState(`Workspace ${workspaceId || 1}`);
   const [currentNote, setCurrentNote] = useState("Untitled.txt");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   
@@ -647,79 +651,125 @@ export default function TextEditor() {
   };
 
   return (
-        <div style={{ display: 'flex', height: '100vh', background: '#111', overflow: 'hidden', fontFamily: "'Georgia', serif" }}>
-      {/* Sidebar */}
-      <div style={{ width: '220px', background: '#141414', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        {/* Sidebar Header */}
-        <div style={{ padding: '16px 14px 8px', borderBottom: '1px solid #222' }}>
-          <button
-            onClick={handleCreateNote}
-            style={{ width: '100%', background: '#3DD6D0', color: '#0a1f1e', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', letterSpacing: '0.02em', transition: 'opacity 0.15s' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            + New Note
-          </button>
-        </div>
- 
-        {/* Notes list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
-          {notes.map(note => (
-            <button
-              key={note.id}
-              onClick={() => handleNoteClick(note)}
-              style={{
-                width: '100%', textAlign: 'left', background: note.id === currentNoteId ? '#1e2e2d' : 'none',
-                border: 'none', borderRadius: '6px', padding: '7px 10px', cursor: 'pointer',
-                color: note.id === currentNoteId ? '#3DD6D0' : '#999', fontSize: '13px',
-                fontWeight: note.id === currentNoteId ? 600 : 400, transition: 'all 0.15s',
-                marginBottom: '2px',
-              }}
-              onMouseEnter={e => { if (note.id !== currentNoteId) e.currentTarget.style.color = '#ccc'; }}
-              onMouseLeave={e => { if (note.id !== currentNoteId) e.currentTarget.style.color = '#999'; }}
-            >
-              {note.title}
-            </button>
-          ))}
-        </div>
- 
-        {/* Bottom actions */}
-        <div style={{ borderTop: '1px solid #222', padding: '10px 8px' }}>
-          <button style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', padding: '7px 10px', borderRadius: '6px' }}>
-            ❓ Help
-          </button>
-          <button
-            onClick={() => navigate('/login')}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', padding: '7px 10px', borderRadius: '6px' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#ccc')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#666')}
-          >
-            🚪 Logout
-          </button>
-        </div>
-      </div>
- 
-      {/* Main content */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {editorKey ? (
-          <ActiveEditor
-            key={editorKey}
-            currentNoteId={currentNoteId!}
-            currentNote={currentNote}
-            setCurrentNote={setCurrentNote}
-            initialHtml={initialHtml}
-            onSave={handleSave}
-            onDelete={handleDelete}
+    <>
+      <style>{`
+        .te-app-root { display: flex; height: 100vh; background: #111; overflow: hidden; font-family: 'Georgia', serif; }
+        
+        /* Sidebar Styles */
+        .te-sidebar { width: 220px; background: #141414; border-right: 1px solid #222; display: flex; flexDirection: column; flex-shrink: 0; }
+        .te-sidebar-header { padding: 16px 14px 8px; border-bottom: 1px solid #222; }
+        .te-new-note-btn { width: 100%; background: #3DD6D0; color: #0a1f1e; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.02em; transition: opacity 0.15s; }
+        .te-new-note-btn:hover { opacity: 0.85; }
+        .te-note-list { flex: 1; overflow-y: auto; padding: 8px 8px; }
+        .te-note-item { width: 100%; text-align: left; border: none; border-radius: 6px; padding: 7px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; margin-bottom: 2px; }
+        .te-note-item.active { background: #1e2e2d; color: #3DD6D0; font-weight: 600; }
+        .te-note-item:not(.active) { background: none; color: #999; }
+        .te-note-item:not(.active):hover { color: #ccc; }
+        .te-sidebar-footer { border-top: 1px solid #222; padding: 10px 8px; }
+        .te-footer-btn { width: 100%; text-align: left; background: none; border: none; color: #666; cursor: pointer; font-size: 13px; padding: 7px 10px; border-radius: 6px; }
+        .te-footer-btn:hover { color: #ccc; }
+
+        /* Main Area Styles */
+        .te-main-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .te-empty-state { flex: 1; display: flex; alignItems: center; justifyContent: center; color: #444; fontSize: 16px; }
+
+        /* Active Editor UI */
+        .te-active-root { display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: #e8e8e8; font-family: 'Georgia', serif; }
+        .te-top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 44px; background: #111; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
+        .te-breadcrumb { display: flex; align-items: center; gap: 6px; fontSize: 13px; color: #888; }
+        .te-breadcrumb-home { background: none; border: none; color: #3DD6D0; cursor: pointer; fontSize: 13px; padding: 2px 4px; borderRadius: 4px; transition: background 0.15s; }
+        .te-breadcrumb-home:hover { background: #1e3534; }
+        .te-slash { color: #444; }
+        .te-workspace-name { color: #aaa; }
+        .te-current-filename { color: #e8e8e8; font-weight: 600; }
+        .te-top-actions { display: flex; gap: 10px; align-items: center; }
+        .te-icon-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 13px; }
+        .te-search-pill {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: #161616;
+          border: 1px solid #222;
+          border-radius: 7px;
+          padding: 4px 10px;
+          color: #888;
+          font-size: 12px;
+          cursor: pointer;
+        }
+
+        /* Toolbar */
+        .te-toolbar { display: flex; align-items: center; gap: 2px; padding: 0 16px; height: 40px; background: #161616; border-bottom: 1px solid #252525; flex-shrink: 0; flex-wrap: wrap; overflow-x: auto; }
+        .te-tb-btn { background: none; border: none; color: #ccc; cursor: pointer; padding: 3px 7px; border-radius: 4px; font-size: 13px; line-height: 1; transition: background 0.1s; }
+        .te-tb-btn:hover { background: #222; }
+        .te-tb-btn.active { color: #3DD6D0 !important; }
+        .te-divider { width: 1px; height: 16px; background: #2a2a2a; margin: 0 4px; flex-shrink: 0; }
+        .te-select { background: #1e1e1e; border: 1px solid #2a2a2a; color: #ccc; border-radius: 5px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; }
+        .te-font-display { font-size: 12px; color: #888; min-width: 20px; text-align: center; }
+        .te-color-container { display: flex; align-items: center; gap: 4px; }
+        .te-color-label { font-size: 12px; color: #888; }
+        .te-color-picker { width: 24px; height: 18px; border: 1px solid #333; border-radius: 3px; background: none; cursor: pointer; padding: 0; }
+        .te-utility-btn { color: #888; font-size: 11px; }
+        .te-save-main-btn { color: #e8e8e8; margin-left: 4px; font-size: 11px; }
+
+        /* Editor Scroll Area */
+        .te-main-scroll { flex: 1; overflow: auto; padding: 0 60px 40px; position: relative; }
+        .te-title-container { padding-top: 40px; margin-bottom: 8px; }
+        .te-main-title-input { font-size: 32px; font-weight: bold; color: #f0f0f0; background: none; border: none; outline: none; width: 100%; font-family: 'Georgia', serif; }
+        .te-editor-wrapper { cursor: text; }
+
+        /* Tag Dropdown */
+        .te-tag-dropdown { position: fixed; background: #222; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; display: flex; flexDirection: column; padding: 4px; min-width: 160px; }
+        .te-tag-option { padding: 8px 12px; textAlign: left; border: none; background: none; cursor: pointer; borderRadius: 4px; color: #e8e8e8; fontSize: 13px; }
+        .te-tag-option:hover { background: #2a2a2a; }
+
+        /* TipTap Core Styles */
+        .ProseMirror { min-height: 60vh; outline: none; font-size: 16px; line-height: 1.75; color: #d8d8d8; font-family: 'Georgia', serif; caret-color: #3DD6D0; }
+        .ProseMirror p { margin: 0 0 0.5em; }
+        .ProseMirror h1 { font-size: 36px; font-weight: bold; color: #f0f0f0; margin: 0.6em 0 0.3em; }
+        .ProseMirror h2 { font-size: 32px; font-weight: bold; color: #eee; margin: 0.6em 0 0.3em; }
+        .ProseMirror h3 { font-size: 24px; font-weight: 600; color: #ddd; margin: 0.5em 0 0.2em; }
+        .ProseMirror a { color: #3DD6D0; text-decoration: underline; text-underline-offset: 2px; }
+        .ProseMirror a[href^="#note:"] { background: rgba(61,214,208,0.1); color: #3DD6D0; border: 1px solid rgba(61,214,208,0.3); border-radius: 4px; padding: 2px 6px; margin: 0 2px; cursor: pointer; font-size: 0.9em; display: inline-block; user-select: none; text-decoration: none; }
+        .ProseMirror ul { list-style: disc; padding-left: 24px; }
+        .ProseMirror ol { list-style: decimal; padding-left: 24px; }
+        .ProseMirror blockquote { border-left: 3px solid #3DD6D0; padding-left: 16px; color: #888; }
+        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: monospace; color: #3DD6D0; }
+        .ProseMirror strong { color: #f0f0f0; }
+        .ProseMirror em { color: #c8c8c8; }
+      `}</style>
+
+      <div className="te-app-root">
+        {/* Sidebar */}
+        <NotesSidebar
             notes={notes}
+            onCreateNote={handleCreateNote}
             onNoteClick={handleNoteClick}
-            workspaceName={workspaceName}
+           
           />
-        ) : (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '16px' }}>
-            Select or create a note to begin.
-          </div>
-        )}
+ 
+  
+        {/* Main content */}
+        <div className="te-main-container">
+          {editorKey ? (
+            <ActiveEditor
+              key={editorKey}
+              currentNoteId={currentNoteId!}
+              currentNote={currentNote}
+              setCurrentNote={setCurrentNote}
+              initialHtml={initialHtml}
+              onSave={handleSave}
+              onDelete={handleDelete}
+              notes={notes}
+              onNoteClick={handleNoteClick}
+              workspaceName={workspaceName}
+            />
+          ) : (
+            <div className="te-empty-state">
+              Select or create a note to begin.
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
