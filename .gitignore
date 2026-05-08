@@ -16,6 +16,13 @@ dist-ssr
 __pycache__
 venv
 
+# MCP config contains access tokens
+.mcp.json
+
+# Playwright test output (videos, traces)
+test-results
+playwright-report
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
