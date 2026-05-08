@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import NotesSidebar, { type Note } from "./components/NotesSidebar";
 import SearchBar from "./components/SearchBar.tsx";
 import { db_client } from "./auth/client";
@@ -506,6 +506,19 @@ export default function TextEditor() {
   }, [workspaceId]);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
+
+  // Open a specific file if ?file=<id> is in the URL (e.g. from the graph view)
+  useEffect(() => {
+    const requestedId = searchParams.get("file");
+    if (!requestedId || notes.length === 0) return;
+    const match = notes.find(n => n.id === requestedId);
+    if (match && match.id !== currentNoteId) {
+      setCurrentNoteId(match.id);
+      setCurrentNote(match.title);
+      setInitialHtml(match.content || "<p></p>");
+      setEditorKey(match.id);
+    }
+  }, [notes, searchParams, currentNoteId]);
 
   const saveToDatabase = async (latestHtml: string) => {
     // Quick DOM parse to scrape out all the tags so the Python backend can build its graph
