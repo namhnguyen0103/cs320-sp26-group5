@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import NotesSidebar, { type Note } from "./components/NotesSidebar";
+import SearchBar from "./components/SearchBar.tsx";
 import { db_client } from "./auth/client";
 
 // tiptap & yjs imports
@@ -19,27 +20,12 @@ import Color from '@tiptap/extension-color';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 //icons
-//icons
 const IconGraph = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <circle cx="3" cy="13" r="2" stroke="currentColor" strokeWidth="1.3" />
     <circle cx="13" cy="3" r="2" stroke="currentColor" strokeWidth="1.3" />
     <circle cx="13" cy="13" r="2" stroke="currentColor" strokeWidth="1.3" />
     <path d="M5 12l6-8M5 13h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-  </svg>
-);
- 
-const IconSearch = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.3" />
-    <path d="M10 10l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-  </svg>
-);
- 
-const IconBell = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-    <path d="M8 1a5 5 0 015 5v3l1 1v1H2v-1l1-1V6a5 5 0 015-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-    <path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.3" />
   </svg>
 );
 
@@ -49,12 +35,7 @@ const IconUser = () => (
     <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
   </svg>
 );
- 
-const IconChevron = () => (
-  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-    <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+
  
 const IconBullet = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -329,20 +310,13 @@ function ActiveEditor({
         </div>
         <div className="te-top-actions">
           <button className="te-icon-btn"><IconGraph /></button>
-          <button className="te-search-pill"><IconSearch /> Search<IconSearch /></button>
+          <SearchBar placeholder="Search Synapse..." />
           <button className="te-icon-btn"><IconUser /></button>
         </div>
       </div>
  
       {/* Toolbar */}
       <div className="te-toolbar">
-        {/* Status */}
-        <ToolbarSelect 
-          value=""
-          onChange={() => {}}
-          options={[{ label: 'Status', value: '' }, { label: 'Draft', value: 'draft' }, { label: 'Published', value: 'published' }]}
-        />
- 
         <ToolbarDivider />
  
         {/* Heading selector */}
@@ -412,15 +386,6 @@ function ActiveEditor({
         <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'left' }) ? 'active' : ''}`} title="Align Left"><IconAlignLeft /></button>
         <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'center' }) ? 'active' : ''}`} title="Align Center"><IconAlignCenter /></button>
         <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={`te-tb-btn ${editor.isActive({ textAlign: 'right' }) ? 'active' : ''}`} title="Align Right"><IconAlignRight /></button>
- 
-        <ToolbarDivider />
- 
-        {/* Clear Editor */}
-        <button
-          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().setContent('<p></p>').run()}
-          className="te-tb-btn te-utility-btn"
-          title="Clear Editor"
-        >Clear Editor</button>
  
         <ToolbarDivider />
  
@@ -495,9 +460,11 @@ function ToolbarSelect({ value, onChange, options, minWidth = '90px' }: {
 export default function TextEditor() {
   const { workspaceId } = useParams();
   
+  
   const [notes, setNotes] = useState<Note[]>([]);
-  //workspace name
-  const [workspaceName, setWorkspaceName] = useState(`Workspace ${workspaceId || 1}`);
+
+  const [workspaceName, setWorkspaceName] = useState("Workspace");  //workspace name
+  
   const [currentNote, setCurrentNote] = useState("Untitled.txt");
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   
@@ -517,10 +484,25 @@ export default function TextEditor() {
       if (!res.ok) throw new Error("Failed to fetch files");
       const data = await res.json();
       setNotes(data); 
-      if (data.workspaceName) setWorkspaceName(data.workspaceName);
-    } catch (error) {
-      console.error(error);
-    }
+
+      //workspace name
+      const workspaceRes = await fetch(`http://localhost:8000/workspaces/info/${workspaceID}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+      if(workspaceRes.ok){
+        const workspaceData = await workspaceRes.json();
+
+        if(workspaceData?.name) {
+          setWorkspaceName(workspaceData.name);
+        }
+      }
+    }catch (error){
+        console.error(error);
+      }
   }, [workspaceId]);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
@@ -646,13 +628,13 @@ export default function TextEditor() {
   return (
     <>
       <style>{`
-       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        .te-app-root { display: flex; height: 100vh; background: #111; overflow: hidden; font-family: "Mukta Vaani, sans-serif"; }
+      @import url('https://fonts.googleapis.com/css2?family=Krona+One&family=Mukta+Vaani:wght@400;600&display=swap');
+        .te-app-root { display: flex; height: 100vh; background: #111; overflow: hidden; font-family: "Mukta Vaani", sans-serif; }
         
         /* Sidebar Styles */
         .te-sidebar { width: 220px; background: #141414; border-right: 1px solid #222; display: flex; flexDirection: column; flex-shrink: 0; }
         .te-sidebar-header { padding: 16px 14px 8px; border-bottom: 1px solid #222; }
-        .te-new-note-btn { font-family: "Mukta Vaani, sans-serif"; width: 100%; background: #3DD6D0; color: #0a1f1e; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.02em; transition: opacity 0.15s; }
+        .te-new-note-btn { font-family: "Mukta Vaani", sans-serif; width: 100%; background: #3DD6D0; color: #0a1f1e; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.02em; transition: opacity 0.15s; }
         .te-new-note-btn:hover { opacity: 0.85; }
         .te-note-list { flex: 1; overflow-y: auto; padding: 8px 8px; }
         .te-note-item { width: 100%; text-align: left; border: none; border-radius: 6px; padding: 7px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; margin-bottom: 2px; }
@@ -668,15 +650,14 @@ export default function TextEditor() {
         .te-empty-state { flex: 1; display: flex; alignItems: center; justifyContent: center; color: #444; fontSize: 16px; }
 
         /* Active Editor UI */
-        .te-active-root { display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: #e8e8e8; font-family: "Mukta Vaani, sans-serif"; }
+        .te-active-root { display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: #e8e8e8; font-family: "Mukta Vaani", sans-serif; }
         .te-top-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 44px; background: #111; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
-        .te-breadcrumb { display: flex; align-items: center; gap: 6px; fontSize: 13px; color: #888; }
-        .te-breadcrumb-home { background: none; border: none; color: #3DD6D0; cursor: pointer; fontSize: 13px; padding: 2px 4px; borderRadius: 4px; transition: background 0.15s; }
+        .te-breadcrumb { fontFamily: "Mukta Vaani", sans-serif; display: flex; align-items: center; gap: 6px; fontSize: 10px; color: #888; }
+        .te-breadcrumb-home { background: none; border: none; color: #3DD6D0; cursor: pointer; fontSize: 10px; padding: 2px 4px; borderRadius: 4px; transition: background 0.15s; }
         .te-breadcrumb-home:hover { background: #1e3534; }
         .te-slash { color: #444; }
-        .te-workspace-name { color: #ffffff; font-family: "Mukta Vaani, sans-serif"; }
-        .te-current-filename { 
-        font-family: "Mukta Vaani, sans-serif";
+        .te-workspace-name { 
+        font-family: "Mukta Vaani", sans-serif;
          color: #ffffff; 
          font-weight: 500; }
         .te-top-actions { display: flex; gap: 10px; align-items: center; }
@@ -695,24 +676,86 @@ export default function TextEditor() {
         }
 
         /* Toolbar */
-        .te-toolbar { display: flex; align-items: center; gap: 2px; padding: 0 16px; height: 40px; background: #161616; border-bottom: 1px solid #252525; flex-shrink: 0; flex-wrap: wrap; overflow-x: auto; }
+        .te-toolbar { 
+          display: flex; 
+          align-items: center; 
+          gap: 4px; 
+          padding: 0 16px; 
+          height: 40px; 
+          background: #161616; 
+          border-bottom: 1px solid #252525; 
+          flex-shrink: 0; 
+          flex-wrap: wrap; 
+          overflow-x: auto; 
+          fontFamily: "Mukta Vaani, sans-serif";
+        }
         .te-tb-btn { background: none; border: none; color: #ccc; cursor: pointer; padding: 3px 7px; border-radius: 4px; font-size: 13px; line-height: 1; transition: background 0.1s; }
         .te-tb-btn:hover { background: #222; }
         .te-tb-btn.active { color: #3DD6D0 !important; }
         .te-divider { width: 1px; height: 16px; background: #2a2a2a; margin: 0 4px; flex-shrink: 0; }
-        .te-select { background: #1e1e1e; border: 1px solid #2a2a2a; color: #ccc; border-radius: 5px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; }
+        .te-select { 
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+
+          background: #1c1c1c;
+          border: 1px solid #2d2d2d;
+          color: #ddd;
+
+          border-radius: 8px;
+
+          padding: 6px 32px 6px 10px;
+
+          font-size: 12px;
+          font-family: "Mukta Vaani", sans-serif;
+
+          outline: none;
+          cursor: pointer;
+
+          transition:
+            border-color 0.15s ease,
+            background 0.15s ease,
+            color 0.15s ease;
+
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3l3 3 3-3' stroke='%23999' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+          background-repeat: no-repeat;
+          background-position: right 10px center;
+
+          min-height: 30px;
+        }
+        .te-select:hover {
+          background: #232323;
+          border-color: #3a3a3a;
+        }
+          
         .te-font-display { font-size: 12px; color: #888; min-width: 20px; text-align: center; }
         .te-color-container { display: flex; align-items: center; gap: 4px; }
         .te-color-label { font-size: 12px; color: #888; }
         .te-color-picker { 
           width: 20px; 
           height: 20px; 
-          border: 1px solid #333; 
-          border-radius: 3px; 
+          border: 1px solid #888; 
+          border-radius: 8px; 
           background: none; cursor: pointer; padding: 0px;
          }
+          .te-color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+          }
+
+          .te-color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 7px;
+          }
         .te-utility-btn { color: #888; font-size: 11px; }
-        .te-save-main-btn { color: #e8e8e8; margin-left: 4px; font-size: 11px; }
+        .te-save-main-btn { 
+          background: linear-gradient(135deg, #71F7DC 15%, #3DD6D0 100%);
+          padding: 8px 15px 6px 15px;
+          color: #e8e8e8; 
+          margin-left: 7px; 
+          font-size: 11px; 
+
+          }
 
         /* Editor Scroll Area */
         .te-main-scroll { flex: 1; overflow: auto; padding: 0 60px 40px; position: relative; }

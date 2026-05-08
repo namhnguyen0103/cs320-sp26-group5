@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+import {useState} from "react"; //for help
 // Update the type to match the data coming from the database
 export type Note = {
   id: string;
@@ -27,17 +29,18 @@ const IconLogout = () => (
   </svg>
 );
 
-
-
 export default function NotesSidebar({
   notes,
   onCreateNote,
   onNoteClick,
   activeNoteId,
 }: NotesSidebarProps) {
+  const navigate = useNavigate();
+  const [showHelp, setShowHelp] = useState(false);
   return (
     <>
       <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Krona+One&family=Mukta+Vaani:wght@400;600&display=swap');
         .ns-sidebar {
           width: 148px;
           background: #111;
@@ -49,6 +52,7 @@ export default function NotesSidebar({
         }
  
         .ns-new-btn {
+          font-family: "Mukta Vaani", sans-serif;
           margin: 10px 10px 6px;
           padding: 7px 12px;
           background: linear-gradient(135deg, #71F7DC 15%, #3DD6D0 100%);
@@ -118,7 +122,85 @@ export default function NotesSidebar({
         }
  
         .ns-footer-btn:hover { background: #1a1a1a; color: #999; }
+
+        .ns-help-overlay {
+          position: fixed;
+          inset: 0;
+
+          background: rgba(0,0,0,0.55);
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          z-index: 2000;
+
+         backdrop-filter: blur(4px);
+      }
+
+      .ns-help-modal {
+        width: 420px;
+
+        background: #171717;
+
+        border: 1px solid #2a2a2a;
+        border-radius: 18px;
+
+        padding: 28px;
+
+        position: relative;
+
+        box-shadow:
+          0 20px 60px rgba(0,0,0,0.45);
+      }
+
+      .ns-help-close {
+        position: absolute;
+
+        top: 14px;
+        right: 14px;
+
+        width: 28px;
+        height: 28px;
+
+        border-radius: 50%;
+
+        border: none;
+
+        background: #222;
+        color: #777;
+
+        cursor: pointer;
+
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .ns-help-close:hover {
+        background: #2d2d2d;
+        color: #fff;
+      }
+
+      .ns-help-title {
+        margin: 0 0 18px;
+
+        font-size: 22px;
+        font-weight: 700;
+
+        color: #f3f3f3;
+      }
+
+      .ns-help-text {
+        font-size: 13px;
+        line-height: 1.7;
+
+        color: #999;
+
+        margin-bottom: 14px;
+      }
       `}</style>
+      
       <aside className="ns-sidebar">
 
           
@@ -140,16 +222,54 @@ export default function NotesSidebar({
         </div>
  
         <div className="ns-footer">
-          <button className="ns-footer-btn">
+          <button className="ns-footer-btn" onClick={()=>setShowHelp(true)}>
             <IconHelp />
             <span>Help</span>
           </button>
-          <button className="ns-footer-btn">
+          <button onClick={() => navigate('/login')} className="ns-footer-btn">
             <IconLogout />
             <span>Logout</span>
           </button>
         </div>
       </aside>
+
+      {showHelp && (
+  <div className="ns-help-overlay">
+    <div className="ns-help-modal">
+      
+      <button
+        className="ns-help-close"
+        onClick={() => setShowHelp(false)}
+      >
+        ✕
+      </button>
+
+      <h2 className="ns-help-title">Welcome to Synapse</h2>
+
+      <p className="ns-help-text">
+        Synapse is a collaborative note-taking workspace designed for
+        connected thinking.
+      </p>
+
+      <p className="ns-help-text">
+        Create notes, link ideas together using [[ references ]],
+        collaborate live with teammates, and organize knowledge across
+        workspaces.
+      </p>
+
+      <p className="ns-help-text">
+        Use the sidebar to create and switch between notes.
+        Use the toolbar to format content, create headings,
+        lists, links, and more.
+      </p>
+
+    </div>
+  </div>
+)}
     </>
+
+    
   );
 }
+
+

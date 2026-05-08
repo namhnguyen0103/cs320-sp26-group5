@@ -20,8 +20,7 @@ export default function Navbar() {
       <div style={styles.left}>
         <img src={logoImage} alt="Synapse logo" style={styles.logoImg} />
         <Link to="/" style={styles.logo}>SYNAPSE</Link>
-        <span style={styles.slash}>/</span>
-        <span style={styles.breadcrumb}>Workspaces</span>
+
       </div>
 
       {/* links, might get rid of? */}
@@ -41,9 +40,6 @@ export default function Navbar() {
             Logout
           </button>
         )}
-        <svg style={styles.bell} width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 1a5 5 0 00-5 5v2.5L2 10h12l-1-1.5V6a5 5 0 00-5-5zm0 14a2 2 0 01-2-2h4a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="1.2"/>
-        </svg>
       </div>
     </header>
   );
