@@ -56,6 +56,6 @@ CS320-SP26-GROUP5/
 ## Tech Stack
 
 - **Frontend:** React, TypeScript, Vite
-- **Backend:** Flask or Django or FastAPI (TBD)
+- **Backend:** FastAPI
 - **Database/Auth:** Supabase (PostgreSQL)
-- **Graph Visualization:** D3.js or Cytoscape.js (TBD)
+- **Graph Visualization:** D3.js
