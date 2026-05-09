@@ -459,7 +459,8 @@ function ToolbarSelect({ value, onChange, options, minWidth = '90px' }: {
 
 export default function TextEditor() {
   const { workspaceId } = useParams();
-  
+
+  const [searchParams] = useSearchParams();  
   
   const [notes, setNotes] = useState<Note[]>([]);
 
@@ -486,7 +487,7 @@ export default function TextEditor() {
       setNotes(data); 
 
       //workspace name
-      const workspaceRes = await fetch(`http://localhost:8000/workspaces/info/${workspaceID}`,
+      const workspaceRes = await fetch(`http://localhost:8000/workspaces/info/${workspaceId}`,
         {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -792,7 +793,7 @@ export default function TextEditor() {
         .ProseMirror ul { list-style: disc; padding-left: 24px; }
         .ProseMirror ol { list-style: decimal; padding-left: 24px; }
         .ProseMirror blockquote { border-left: 3px solid #3DD6D0; padding-left: 16px; color: #888; }
-        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: "Mukta Vaani, sans-serif; color: #3DD6D0; }
+        .ProseMirror code { background: #2a2a2a; border-radius: 4px; padding: 2px 5px; font-family: "Mukta Vaani", sans-serif; color: #3DD6D0; }
         .ProseMirror strong { color: #f0f0f0; }
         .ProseMirror em { color: #c8c8c8; }
       `}</style>
