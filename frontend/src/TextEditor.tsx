@@ -161,6 +161,7 @@ function useCollaboration(fileId: string | null) {
 // 2. THE EDITOR COMPONENT
 // Displays the Yjs logic onto the screen so it looks like a real text box
 interface ActiveEditorProps {
+  workspaceId: string;
   currentNoteId: string;
   currentNote: string;
   setCurrentNote: (val: string) => void;
@@ -176,7 +177,7 @@ interface ActiveEditorProps {
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6; 
 
 function ActiveEditor({ 
-  currentNoteId, currentNote, setCurrentNote, initialHtml, onSave, onDelete, notes, onNoteClick, workspaceName
+  workspaceId, currentNoteId, currentNote, setCurrentNote, initialHtml, onSave, onDelete, notes, onNoteClick, workspaceName
 }: ActiveEditorProps) {
   const navigate = useNavigate();
   const { ydoc } = useCollaboration(currentNoteId);
@@ -309,7 +310,7 @@ function ActiveEditor({
           <span className="te-current-filename">{currentNote}</span>
         </div>
         <div className="te-top-actions">
-          <button className="te-icon-btn"><IconGraph /></button>
+          <button onClick={() => navigate(`/graph/${workspaceId}`)} className="te-icon-btn"><IconGraph /></button>
           <SearchBar placeholder="Search Synapse..." />
           <button className="te-icon-btn"><IconUser /></button>
         </div>
@@ -813,6 +814,7 @@ export default function TextEditor() {
           {editorKey ? (
             <ActiveEditor
               key={editorKey}
+              workspaceId={workspaceId!}
               currentNoteId={currentNoteId!}
               currentNote={currentNote}
               setCurrentNote={setCurrentNote}
