@@ -1,7 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 import {useNavigate } from "react-router-dom";
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
