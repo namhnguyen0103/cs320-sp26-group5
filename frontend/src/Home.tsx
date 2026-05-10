@@ -68,15 +68,6 @@ function WorkspaceCard({
   );
 }
 
-function IconSettings() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={styles.navIcon}>
-      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function IconHelp() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={styles.navIcon}>
@@ -96,6 +87,7 @@ function IconLogout() {
 }
 
 export default function Home() {
+  const [showHelp, setShowHelp] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -248,22 +240,94 @@ export default function Home() {
         .search-dropdown-item:hover {
           background: #f1f5f9;
         }
+
+        .ns-help-overlay {
+          position: fixed;
+          inset: 0;
+
+          background: rgba(0,0,0,0.55);
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          z-index: 2000;
+
+         backdrop-filter: blur(4px);
+      }
+
+      .ns-help-modal {
+        width: 420px;
+
+        background: #171717;
+
+        border: 1px solid #2a2a2a;
+        border-radius: 18px;
+
+        padding: 28px;
+
+        position: relative;
+
+        box-shadow:
+          0 20px 60px rgba(0,0,0,0.45);
+      }
+
+      .ns-help-close {
+        position: absolute;
+
+        top: 14px;
+        right: 14px;
+
+        width: 28px;
+        height: 28px;
+
+        border-radius: 50%;
+
+        border: none;
+
+        background: #222;
+        color: #777;
+
+        cursor: pointer;
+
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .ns-help-close:hover {
+        background: #2d2d2d;
+        color: #fff;
+      }
+
+      .ns-help-title {
+        margin: 0 0 18px;
+
+        font-size: 22px;
+        font-weight: 700;
+
+        color: #f3f3f3;
+      }
+
+      .ns-help-text {
+        font-size: 13px;
+        line-height: 1.7;
+
+        color: #999;
+
+        margin-bottom: 14px;
       `}</style>
 
       <div style={styles.body}>
 
         {/* Collapsible sidebar */}
         <div className="sidebar" style={styles.sidebar}>
-          <div className="nav-item" style={styles.navItem}>
-            <IconSettings />
-            <span className="nav-label">Settings</span>
-          </div>
           <div style={{ flex: 1 }} />
-          <div className="nav-item" style={styles.navItem}>
+          <div className="nav-item" style={styles.navItem} onClick={()=>setShowHelp(true)}>
             <IconHelp />
             <span className="nav-label">Help</span>
           </div>
-          <div className="nav-item" style={styles.navItem} onClick={signOut}>
+          <div className="nav-item" style={styles.navItem} onClick={() => navigate('/login')}>
             <IconLogout />
             <span className="nav-label">Logout</span>
           </div>
@@ -379,6 +443,39 @@ export default function Home() {
                   )}
                 </div>
               )}
+              {showHelp && (
+              <div className="ns-help-overlay">
+                <div className="ns-help-modal">
+                  
+                  <button
+                    className="ns-help-close"
+                    onClick={() => setShowHelp(false)}
+                  >
+                    ✕
+                  </button>
+
+                  <h2 className="ns-help-title">Welcome to Synapse</h2>
+
+                  <p className="ns-help-text">
+                    Synapse is a collaborative note-taking workspace designed for
+                    connected thinking.
+                  </p>
+
+                  <p className="ns-help-text">
+                    Create notes, link ideas together using [[ references ]],
+                    collaborate live with teammates, and organize knowledge across
+                    workspaces.
+                  </p>
+
+                  <p className="ns-help-text">
+                    Use the sidebar to create and switch between notes.
+                    Use the toolbar to format content, create headings,
+                    lists, links, and more.
+                  </p>
+
+                </div>
+              </div>
+            )}
             </div>
           </div>
 
@@ -404,6 +501,8 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      
     </>
   );
 }
