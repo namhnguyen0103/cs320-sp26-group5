@@ -335,7 +335,6 @@ function ActiveEditor({
 };
 
 
-
   if (!editor) return null;
 
   const headingOptions = [
