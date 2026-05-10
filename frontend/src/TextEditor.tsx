@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import NotesSidebar, { type Note } from "./components/NotesSidebar";
 import SearchBar from "./components/SearchBar.tsx";
 import { db_client } from "./auth/client";
+import {Extension} from '@tiptap/core';
 
 // tiptap & yjs imports
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -156,7 +157,56 @@ function useCollaboration(fileId: string | null) {
   return { ydoc, provider };
 }
 
+//font size change
+const FontSize = Extension.create({
+  name: 'fontSize',
 
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          fontSize: {
+            default: null,
+
+            parseHTML: element => element.style.fontSize,
+
+            renderHTML: attributes => {
+              if (!attributes.fontSize) {
+                return {};
+              }
+
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setFontSize:
+        (fontSize: string) =>
+        ({ chain }) => {
+          return chain()
+            .setMark('textStyle', { fontSize })
+            .run();
+        },
+
+      unsetFontSize:
+        () =>
+        ({ chain }) => {
+          return chain()
+            .setMark('textStyle', { fontSize: null })
+            .removeEmptyTextStyle()
+            .run();
+        },
+    };
+  },
+});
 
 // 2. THE EDITOR COMPONENT
 // Displays the Yjs logic onto the screen so it looks like a real text box
@@ -197,6 +247,7 @@ function ActiveEditor({
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
       Color,
+      FontSize,
 
       Collaboration.configure({ document: ydoc }),
     ],
@@ -276,11 +327,12 @@ function ActiveEditor({
   };
 
   const applyFontSize = (size: number) => {
-    setFontSize(size);
-    if (editor) {
-      editor.chain().focus().setMark('textStyle', { fontSize: `${size}px` }).run();
-    }
-  };
+  setFontSize(size);
+
+  if (editor) {
+    editor.chain().focus().setFontSize(`${size}px`).run();
+  }
+};
 
 
   if (!editor) return null;
