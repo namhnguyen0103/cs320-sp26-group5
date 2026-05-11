@@ -58,4 +58,4 @@ CS320-SP26-GROUP5/
 - **Frontend:** React, TypeScript, Vite
 - **Backend:** FastAPI
 - **Database/Auth:** Supabase (PostgreSQL)
-- **Graph Visualization:** D3.js
+- **Graph Visualization:** react-force-graph-2d
