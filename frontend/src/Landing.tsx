@@ -22,6 +22,7 @@ body {
   margin: 0;
 }
 
+
 ::selection {
   background: #3DD6D0;
   color: #1a1a1a;
