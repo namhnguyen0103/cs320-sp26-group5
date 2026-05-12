@@ -179,8 +179,8 @@ export default function Graph() {
           nodeVal={(n: GraphNode) => n.val}
           nodeColor={() => "#3DD6D0"}
           nodeLabel={(n: GraphNode) => n.title}
-          linkColor={() => "rgba(61,214,208,0.25)"}
-          linkWidth={1.2}
+          linkColor={() => "rgba(61,214,208,0.85)"}
+          linkWidth={3}
           linkDirectionalArrowLength={0}
           onNodeClick={(n: GraphNode) =>
             navigate(`/editor/${workspaceId}?file=${n.id}`)
