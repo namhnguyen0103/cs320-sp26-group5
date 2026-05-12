@@ -259,8 +259,28 @@ function ActiveEditor({
       // If they typed [[, calculate the pixel coordinates and pop the dropdown menu
       if (textBeforeCursor === "[[") {
         const coords = editor.view.coordsAtPos(from);
-        setDropdownPos({ top: coords.bottom, left: coords.left });
-        setDropdownVisible(true);
+
+  const editorElement = editor.view.dom as HTMLElement;
+  const scrollContainer = editorElement.closest('.te-main-scroll') as HTMLElement;
+
+  if (scrollContainer) {
+    const containerRect = scrollContainer.getBoundingClientRect();
+
+    setDropdownPos({
+      top:
+        coords.bottom -
+        containerRect.top +
+        scrollContainer.scrollTop +
+        8,
+
+      left:
+        coords.left -
+        containerRect.left +
+        scrollContainer.scrollLeft,
+    });
+  }
+
+  setDropdownVisible(true);
       } else {
         setDropdownVisible(false);
       }
@@ -353,7 +373,7 @@ function ActiveEditor({
       {/* Breadcrumb / Top Bar */}
       <div className="te-top-nav">
         <div className="te-breadcrumb">
-          <button onClick={() => navigate('/')} className="te-breadcrumb-home">
+          <button onClick={() => navigate('/Home')} className="te-breadcrumb-home">
             Workspaces
           </button>
           <span className="te-slash">/</span>
@@ -452,7 +472,13 @@ function ActiveEditor({
       {/* Editor Area */}
       <div className="te-main-scroll">
         {dropdownVisible && (
-          <div className="te-tag-dropdown" style={{ top: dropdownPos.top + 5, left: dropdownPos.left }}>
+           <div
+    className="te-tag-dropdown"
+    style={{
+      top: dropdownPos.top,
+      left: dropdownPos.left,
+    }}
+  >
             {notes.map((note: Note) => (
               <button
                 key={note.id}
@@ -825,15 +851,64 @@ export default function TextEditor() {
           }
 
         /* Editor Scroll Area */
-        .te-main-scroll { flex: 1; overflow: auto; padding: 0 60px 40px; position: relative; }
+        .te-main-scroll {
+          flex: 1; overflow: auto; padding: 0 60px 40px; position: relative; 
+        }
         .te-title-container { padding-top: 40px; margin-bottom: 8px; }
         .te-main-title-input { font-size: 32px; font-weight: bold; color: #f0f0f0; background: none; border: none; outline: none; width: 100%; font-family: "Mukta Vaani, sans-serif"; }
         .te-editor-wrapper { cursor: text; }
 
         /* Tag Dropdown */
-        .te-tag-dropdown { background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; display: flex; flex-direction: column; padding: 4px; min-width: 150px; }
-        .te-tag-option { padding: 8px 12px; textAlign: left; border: none; background: none; cursor: pointer; borderRadius: 4px; color: #e8e8e8; fontSize: 13px; }
-        .te-tag-option:hover { background: #2a2a2a; }
+        .te-tag-dropdown {  background: black;
+          position: absolute;
+          background: #111111;
+          border: 1px solid #2a2a2a;
+          border-radius: 10px;
+          box-shadow:
+            0 12px 32px rgba(0, 0, 0, 0.45),
+            0 0 0 1px rgba(255,255,255,0.02);
+
+          z-index: 1000;
+
+          display: flex;
+          flex-direction: column;
+
+          padding: 6px;
+
+          min-width: 180px;
+          max-height: 240px;
+
+          overflow-y: auto;
+        }
+        .te-tag-option {  padding: 8px 12px;
+           width: 100%;
+
+          padding: 8px 12px;
+
+          text-align: left;
+
+          border: none;
+          outline: none;
+
+          background: transparent;
+
+          color: #d8d8d8;
+
+          font-size: 13px;
+          font-family: "Mukta Vaani", sans-serif;
+
+          border-radius: 7px;
+
+          cursor: pointer;
+
+          transition:
+            background 0.12s ease,
+            color 0.12s ease;
+          }
+        .te-tag-option:hover {  
+          background: #1f1f1f;
+          color: #71F7DC; 
+        }
 
         /* TipTap Core Styles */
         .ProseMirror { min-height: 60vh; outline: none; font-size: 16px; line-height: 1.75; color: #d8d8d8; font-family: "Mukta Vaani, sans-serif"; caret-color: #ffffff; }
