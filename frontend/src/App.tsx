@@ -7,6 +7,7 @@ import Signup from "./signup";
 import Editor from "./TextEditor.tsx"
 import Graph from "./Graph";
 import { AuthProvider } from "./auth/AuthContext";
+import Landing from "./Landing";
 // import ProtectedRoute from "./components/ProtectedRoute";
 
 
@@ -29,9 +30,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={
-            <Layout>
-              <Home />
-            </Layout>
+              <Landing />
           } />
           <Route path="/home" element={
             <Layout>
