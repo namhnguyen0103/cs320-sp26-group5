@@ -125,13 +125,50 @@ export default function Graph() {
 
   return (
     <div
-      ref={wrapperRef}
+    ref={wrapperRef}
+    style={{
+      width: "100%",
+      height: "calc(100vh - 3px)",
+      background: "#111",
+      position: "relative",
+      overflow: "hidden",
+    }}
+  >
+    {/* Back Button */}
+    <button
+      onClick={() => navigate(`/editor/${workspaceId}`)}
       style={{
-        width: "100%",
-        height: "calc(100vh - 3px)",
-        background: "#111",
+        position: "absolute",
+        top: "18px",
+        left: "18px",
+        zIndex: 20,
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        background: "#171717",
+        border: "1px solid #2b2b2b",
+        color: "#d8d8d8",
+        padding: "10px 14px",
+        borderRadius: "10px",
+        cursor: "pointer",
+        fontSize: "13px",
+        fontFamily: '"Mukta Vaani", sans-serif',
+        transition: "all 0.15s ease",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#1f1f1f";
+        e.currentTarget.style.borderColor = "#3DD6D0";
+        e.currentTarget.style.color = "#71F7DC";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#171717";
+        e.currentTarget.style.borderColor = "#2b2b2b";
+        e.currentTarget.style.color = "#d8d8d8";
       }}
     >
+      ← Back to Editor
+    </button>
       {size.width > 0 && size.height > 0 && (
         <ForceGraph2D
           graphData={{ nodes, links }}
